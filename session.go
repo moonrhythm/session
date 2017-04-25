@@ -58,10 +58,9 @@ func Middleware(config Config) middleware.Middleware {
 			// if session not found, create new session
 			if len(sess.id) == 0 {
 				sess.id = generateID()
-				sess.isNew = true
 			}
 
-			secure := config.Secure == MustSecure
+			secure := config.Secure == ForceSecure
 			if config.Secure == PreferSecure && isTLS(r) {
 				secure = true
 			}
