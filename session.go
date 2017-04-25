@@ -89,7 +89,8 @@ func Middleware(config Config) middleware.Middleware {
 				}
 			}()
 
-			h.ServeHTTP(w, r)
+			nr := r.WithContext(context.WithValue(r.Context(), sessionKey, &sess))
+			h.ServeHTTP(w, nr)
 		})
 	}
 }
