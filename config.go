@@ -23,7 +23,7 @@ type Secure int
 
 // Secure configs
 const (
-	NonSecure    Secure = iota
+	NoSecure     Secure = iota
 	PreferSecure        // if request is https will set secure cookie
-	MustSecure          // always set secure cookie
+	ForceSecure         // always set secure cookie
 )
