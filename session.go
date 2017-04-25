@@ -80,12 +80,13 @@ func Middleware(config Config) middleware.Middleware {
 			defer func() {
 				// if session was created and modified, save session to store,
 				// if not don't save to store to prevent brute force attack
-				if sess.isNew && !sess.modified {
-					return
-				}
 				b, err := sess.encode()
 				if err != nil {
-					config.Store.Set(sess.id, sess.userID, b, config.MaxAge)
+					if bytes.Compare(sess.p, b) == 0 {
+						config.Store.Exp(sess.id, config.MaxAge)
+						return
+					}
+					config.Store.Set(sess.id, b, config.MaxAge)
 				}
 			}()
 
@@ -96,11 +97,9 @@ func Middleware(config Config) middleware.Middleware {
 
 // Session type
 type Session struct {
-	id       string
-	d        map[interface{}]interface{}
-	isNew    bool
-	modified bool
-	userID   interface{}
+	id string
+	d  map[interface{}]interface{}
+	p  []byte
 }
 
 func init() {
@@ -148,9 +147,6 @@ func (sess *Session) Set(key, value interface{}) {
 	if sess.d == nil {
 		sess.d = make(map[interface{}]interface{})
 	}
-	if !sess.modified {
-		sess.modified = true
-	}
 	sess.d[key] = value
 }
 
@@ -159,13 +155,5 @@ func (sess *Session) Del(key interface{}) {
 	if sess.d == nil {
 		return
 	}
-	if !sess.modified {
-		sess.modified = true
-	}
 	delete(sess.d, key)
-}
-
-// SetUserID sets user id to session
-func (sess *Session) SetUserID(userID interface{}) {
-	sess.userID = userID
 }
