@@ -60,8 +60,8 @@ func Middleware(config Config) middleware.Middleware {
 				sess.id = generateID()
 			}
 
-			secure := config.Secure == ForceSecure
-			if config.Secure == PreferSecure && isTLS(r) {
+			secure := false
+			if (config.Secure == ForceSecure) || (config.Secure == PreferSecure && isTLS(r)) {
 				secure = true
 			}
 
@@ -77,7 +77,7 @@ func Middleware(config Config) middleware.Middleware {
 			})
 
 			defer func() {
-				// if session was created and modified, save session to store,
+				// if session was modified, save session to store,
 				// if not don't save to store to prevent brute force attack
 				b, err := sess.encode()
 				if err == nil {
@@ -89,7 +89,7 @@ func Middleware(config Config) middleware.Middleware {
 				}
 			}()
 
-			nr := r.WithContext(context.WithValue(r.Context(), sessionKey, &sess))
+			nr := r.WithContext(Set(r.Context(), &sess))
 			h.ServeHTTP(w, nr)
 		})
 	}
@@ -142,7 +142,7 @@ func (sess *Session) Get(key interface{}) interface{} {
 	return sess.d[key]
 }
 
-// Set sets data from session
+// Set sets data to session
 func (sess *Session) Set(key, value interface{}) {
 	if sess.d == nil {
 		sess.d = make(map[interface{}]interface{})
