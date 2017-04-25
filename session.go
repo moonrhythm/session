@@ -80,7 +80,7 @@ func Middleware(config Config) middleware.Middleware {
 				// if session was created and modified, save session to store,
 				// if not don't save to store to prevent brute force attack
 				b, err := sess.encode()
-				if err != nil {
+				if err == nil {
 					if bytes.Compare(sess.p, b) == 0 {
 						config.Store.Exp(sess.id, config.MaxAge)
 						return
