@@ -65,7 +65,7 @@ func (s *sqlStore) Get(key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if exp != nil && exp.After(now) {
+	if exp != nil && exp.Before(now) {
 		s.Del(key)
 		return nil, errNotFound
 	}
