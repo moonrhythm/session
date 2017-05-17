@@ -13,26 +13,27 @@ import (
 // New creates new sql store
 func New(db *sql.DB, table string) session.Store {
 	_, err := db.Exec(fmt.Sprintf(`
-		CREATE TABLE IF NOT EXISTS %s (
-			k TEXT PRIMARY KEY UNIQUE NOT NULL,
-			v BLOB,
-			e TIMESTAMP,
-			INDEX (e)
+		create table if not exists %s (
+			k text,
+			v blob,
+			e timestamp,
+			primary key (k),
+			index (e)
 		);
 	`, table))
 	if err != nil {
 		log.Printf("session: can not create sql table; %v\n", err)
 	}
-	getStmt, _ := db.Prepare(fmt.Sprintf(`SELECT v, e, now() FROM %s WHERE k = $1;`, table))
+	getStmt, _ := db.Prepare(fmt.Sprintf(`select v, e, now() from %s where k = $1;`, table))
 	setStmt, _ := db.Prepare(fmt.Sprintf(`
-		INSERT INTO %s (k, v, e)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (k)
-		DO UPDATE SET v = EXCLUDED.v, k = EXCLUDED.k;
+		insert into %s (k, v, e)
+		values ($1, $2, $3)
+		on conflict (k)
+		do update set v = excluded.v, k = excluded.k;
 	`, table))
-	delStmt, _ := db.Prepare(fmt.Sprintf(`DELETE FROM %s WHERE k = $1;`, table))
-	expStmt, _ := db.Prepare(fmt.Sprintf(`UPDATE %s SET e = $2 WHERE k = $1;`, table))
-	delExpiredStmt, _ := db.Prepare(fmt.Sprintf(`DELETE FROM %s WHERE e <= now();`, table))
+	delStmt, _ := db.Prepare(fmt.Sprintf(`delete from %s where k = $1;`, table))
+	expStmt, _ := db.Prepare(fmt.Sprintf(`update %s set e = $2 where k = $1;`, table))
+	delExpiredStmt, _ := db.Prepare(fmt.Sprintf(`delete from %s where e <= now();`, table))
 	s := &sqlStore{db, getStmt, setStmt, delStmt, expStmt, delExpiredStmt}
 	go s.cleanupWorker()
 	return s
