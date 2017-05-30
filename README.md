@@ -44,7 +44,7 @@ func main() {
 		Name:     "sess",
 		Path:     "/",
 		Secure:   session.PreferSecure,
-		Store:    store.New(),
+		Store:    store.New(store.Config{}),
 	})(mux)
 
 	log.Fatal(http.ListenAndServe(":8080", h))

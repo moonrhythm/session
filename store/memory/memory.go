@@ -8,12 +8,20 @@ import (
 	"github.com/acoshift/session"
 )
 
+// Config is the memory store config
+type Config struct {
+	CleanupInterval time.Duration
+}
+
 // New creates new memory store
-func New() session.Store {
+func New(config Config) session.Store {
 	s := &memoryStore{
-		l: make(map[interface{}]*item),
+		cleanupInterval: config.CleanupInterval,
+		l:               make(map[interface{}]*item),
 	}
-	go s.cleanupWorker()
+	if config.CleanupInterval > 0 {
+		go s.cleanupWorker()
+	}
 	return s
 }
 
@@ -23,8 +31,9 @@ type item struct {
 }
 
 type memoryStore struct {
-	m sync.RWMutex
-	l map[interface{}]*item
+	cleanupInterval time.Duration
+	m               sync.RWMutex
+	l               map[interface{}]*item
 }
 
 func (s *memoryStore) cleanupWorker() {
@@ -38,7 +47,7 @@ func (s *memoryStore) cleanupWorker() {
 			}
 		}
 		s.m.Unlock()
-		time.Sleep(6 * time.Hour)
+		time.Sleep(s.cleanupInterval)
 	}
 }
 
