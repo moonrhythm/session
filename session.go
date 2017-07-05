@@ -106,7 +106,7 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 			Path:     s.Path,
 			HttpOnly: s.HTTPOnly,
 			Value:    "",
-			MaxAge:   0,
+			MaxAge:   -1,
 			Secure:   s.Secure,
 		})
 		return
