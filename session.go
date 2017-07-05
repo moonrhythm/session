@@ -9,8 +9,8 @@ import (
 // Session type
 type Session struct {
 	id          string
-	d           map[interface{}]interface{}
-	p           []byte
+	data        map[interface{}]interface{}
+	rawData     []byte
 	markDestory bool
 }
 
@@ -32,12 +32,12 @@ func Set(ctx context.Context, s *Session) context.Context {
 }
 
 func (s *Session) encode() ([]byte, error) {
-	if len(s.d) == 0 {
+	if len(s.data) == 0 {
 		return []byte{}, nil
 	}
 
 	buf := &bytes.Buffer{}
-	err := gob.NewEncoder(buf).Encode(&s.d)
+	err := gob.NewEncoder(buf).Encode(&s.data)
 	if err != nil {
 		return nil, err
 	}
@@ -45,34 +45,34 @@ func (s *Session) encode() ([]byte, error) {
 }
 
 func (s *Session) decode(b []byte) {
-	s.d = make(map[interface{}]interface{})
+	s.data = make(map[interface{}]interface{})
 	if len(b) > 0 {
-		gob.NewDecoder(bytes.NewReader(b)).Decode(&s.d)
+		gob.NewDecoder(bytes.NewReader(b)).Decode(&s.data)
 	}
 }
 
 // Get gets data from session
 func (s *Session) Get(key interface{}) interface{} {
-	if s.d == nil {
+	if s.data == nil {
 		return nil
 	}
-	return s.d[key]
+	return s.data[key]
 }
 
 // Set sets data to session
 func (s *Session) Set(key, value interface{}) {
-	if s.d == nil {
-		s.d = make(map[interface{}]interface{})
+	if s.data == nil {
+		s.data = make(map[interface{}]interface{})
 	}
-	s.d[key] = value
+	s.data[key] = value
 }
 
 // Del deletes data from session
 func (s *Session) Del(key interface{}) {
-	if s.d == nil {
+	if s.data == nil {
 		return
 	}
-	delete(s.d, key)
+	delete(s.data, key)
 }
 
 // Destroy destroys session from store

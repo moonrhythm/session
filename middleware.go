@@ -42,10 +42,10 @@ func Middleware(config Config) middleware.Middleware {
 			cookie, err := r.Cookie(name)
 			if err == nil && len(cookie.Value) > 0 {
 				// get session data from store
-				s.p, err = config.Store.Get(cookie.Value)
+				s.rawData, err = config.Store.Get(cookie.Value)
 				if err == nil {
 					s.id = cookie.Value
-					s.decode(s.p)
+					s.decode(s.rawData)
 				}
 				// DO NOT set session id to cookie value if not found in store
 				// to prevent session fixation attack
@@ -78,7 +78,7 @@ func Middleware(config Config) middleware.Middleware {
 				// if not don't save to store to prevent store overflow
 				b, err := s.encode()
 				if err == nil {
-					if bytes.Compare(s.p, b) == 0 {
+					if bytes.Compare(s.rawData, b) == 0 {
 						config.Store.Exp(s.id, config.MaxAge)
 						return
 					}
