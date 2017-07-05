@@ -73,7 +73,7 @@ func Middleware(config Config) middleware.Middleware {
 				}
 
 				// if session was modified, save session to store,
-				// if not don't save to store to prevent brute force attack
+				// if not don't save to store to prevent store overflow
 				b, err := s.encode()
 				if err == nil {
 					if bytes.Compare(s.p, b) == 0 {
