@@ -8,9 +8,10 @@ import (
 
 // Session type
 type Session struct {
-	id string
-	d  map[interface{}]interface{}
-	p  []byte
+	id          string
+	d           map[interface{}]interface{}
+	p           []byte
+	markDestory bool
 }
 
 func init() {
@@ -72,4 +73,9 @@ func (s *Session) Del(key interface{}) {
 		return
 	}
 	delete(s.d, key)
+}
+
+// Destroy destroys session from store
+func (s *Session) Destroy() {
+	s.markDestory = true
 }

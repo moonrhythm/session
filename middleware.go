@@ -67,6 +67,11 @@ func Middleware(config Config) middleware.Middleware {
 
 			// use defer to alway save session even panic
 			defer func() {
+				if s.markDestory {
+					config.Store.Del(s.id)
+					return
+				}
+
 				// if session was modified, save session to store,
 				// if not don't save to store to prevent brute force attack
 				b, err := s.encode()
