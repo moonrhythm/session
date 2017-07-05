@@ -60,20 +60,15 @@ func Middleware(config Config) middleware.Middleware {
 
 			// use defer to alway save session even panic
 			defer func() {
-				if s.markDestory {
+				switch s.mark {
+				case markDestory:
 					config.Store.Del(s.id)
-					return
-				}
-
-				// if session was modified, save session to store,
-				// if not don't save to store to prevent store overflow
-				if s.markSave == 1 {
+				case markSave:
+					// if session was modified, save session to store,
+					// if not don't save to store to prevent store overflow
 					config.Store.Set(s.id, s.encodedData, s.MaxAge)
-					return
-				}
-
-				// session not modified but not empty
-				if s.markSave == 2 {
+				case markRolling:
+					// session not modified but not empty
 					config.Store.Exp(s.id, config.MaxAge)
 				}
 			}()
