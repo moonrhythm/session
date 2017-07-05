@@ -1,11 +1,9 @@
 package session
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
-	"time"
 
 	"github.com/acoshift/middleware"
 )
@@ -16,30 +14,34 @@ func Middleware(config Config) middleware.Middleware {
 		panic("session: nil store")
 	}
 
-	entropy := config.Entropy
-	if entropy <= 0 {
-		entropy = 16
+	// set default config
+	if config.Entropy <= 0 {
+		config.Entropy = 16
 	}
 
-	name := config.Name
-	if len(name) == 0 {
-		name = "sess"
+	if len(config.Name) == 0 {
+		config.Name = "sess"
 	}
-
-	maxAge := int(config.MaxAge / time.Second)
 
 	generateID := func() string {
-		b := make([]byte, entropy)
+		b := make([]byte, config.Entropy)
 		rand.Read(b)
 		return base64.URLEncoding.EncodeToString(b)
 	}
 
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var s Session
+			s := Session{
+				Name:     config.Name,
+				Domain:   config.Domain,
+				Path:     config.Path,
+				HTTPOnly: config.HTTPOnly,
+				MaxAge:   config.MaxAge,
+				Secure:   (config.Secure == ForceSecure) || (config.Secure == PreferSecure && isTLS(r)),
+			}
 
 			// get session key from cookie
-			cookie, err := r.Cookie(name)
+			cookie, err := r.Cookie(config.Name)
 			if err == nil && len(cookie.Value) > 0 {
 				// get session data from store
 				s.rawData, err = config.Store.Get(cookie.Value)
@@ -56,17 +58,6 @@ func Middleware(config Config) middleware.Middleware {
 				s.id = generateID()
 			}
 
-			// rolling cookie
-			http.SetCookie(w, &http.Cookie{
-				Name:     name,
-				Domain:   config.Domain,
-				Path:     config.Path,
-				HttpOnly: config.HTTPOnly,
-				Value:    s.id,
-				MaxAge:   maxAge,
-				Secure:   (config.Secure == ForceSecure) || (config.Secure == PreferSecure && isTLS(r)),
-			})
-
 			// use defer to alway save session even panic
 			defer func() {
 				if s.markDestory {
@@ -76,18 +67,23 @@ func Middleware(config Config) middleware.Middleware {
 
 				// if session was modified, save session to store,
 				// if not don't save to store to prevent store overflow
-				b, err := s.encode()
-				if err == nil {
-					if bytes.Compare(s.rawData, b) == 0 {
-						config.Store.Exp(s.id, config.MaxAge)
-						return
-					}
-					config.Store.Set(s.id, b, config.MaxAge)
+				if s.markSave == 1 {
+					config.Store.Set(s.id, s.encodedData, s.MaxAge)
+					return
+				}
+
+				// session not modified but not empty
+				if s.markSave == 2 {
+					config.Store.Exp(s.id, config.MaxAge)
 				}
 			}()
 
 			nr := r.WithContext(Set(r.Context(), &s))
-			h.ServeHTTP(w, nr)
+			nw := sessionWriter{
+				ResponseWriter: w,
+				s:              &s,
+			}
+			h.ServeHTTP(&nw, nr)
 		})
 	}
 }

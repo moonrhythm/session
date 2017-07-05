@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"net/http"
+	"time"
 )
 
 // Session type
@@ -12,6 +14,16 @@ type Session struct {
 	data        map[interface{}]interface{}
 	rawData     []byte
 	markDestory bool
+	markSave    int // 1 = save, 2 = same value just extend ttl
+	encodedData []byte
+
+	// cookie config
+	Name     string
+	Domain   string
+	Path     string
+	HTTPOnly bool
+	MaxAge   time.Duration
+	Secure   bool
 }
 
 func init() {
@@ -78,4 +90,45 @@ func (s *Session) Del(key interface{}) {
 // Destroy destroys session from store
 func (s *Session) Destroy() {
 	s.markDestory = true
+}
+
+func (s *Session) setCookie(w http.ResponseWriter) {
+	if s.markDestory {
+		http.SetCookie(w, &http.Cookie{
+			Name:     s.Name,
+			Domain:   s.Domain,
+			Path:     s.Path,
+			HttpOnly: s.HTTPOnly,
+			Value:    "",
+			MaxAge:   0,
+			Secure:   s.Secure,
+		})
+		return
+	}
+
+	// set cookie only if session value changed
+	var err error
+	s.encodedData, err = s.encode()
+	if err == nil {
+		if bytes.Compare(s.rawData, s.encodedData) == 0 {
+			if len(s.encodedData) == 0 {
+				// empty session
+				return
+			}
+			// should rolling cookie
+			s.markSave = 2
+		} else {
+			s.markSave = 1
+		}
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     s.Name,
+		Domain:   s.Domain,
+		Path:     s.Path,
+		HttpOnly: s.HTTPOnly,
+		Value:    s.id,
+		MaxAge:   int(s.MaxAge / time.Second),
+		Secure:   s.Secure,
+	})
 }
