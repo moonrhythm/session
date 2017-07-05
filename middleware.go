@@ -47,6 +47,8 @@ func Middleware(config Config) middleware.Middleware {
 					s.id = cookie.Value
 					s.decode(s.p)
 				}
+				// DO NOT set session id to cookie value if not found in store
+				// to prevent session fixation attack
 			}
 
 			// if session not found, create new session
