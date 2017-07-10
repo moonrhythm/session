@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"net/http"
 
+	"strings"
+
 	"github.com/acoshift/middleware"
 )
 
@@ -30,7 +32,7 @@ func Middleware(config Config) middleware.Middleware {
 			// or something wrong with OS's pseudorandom generator
 			panic(err)
 		}
-		return base64.URLEncoding.EncodeToString(b)
+		return strings.TrimRight(base64.URLEncoding.EncodeToString(b), "=")
 	}
 
 	return func(h http.Handler) http.Handler {
