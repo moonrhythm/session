@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
-
 	"strings"
 
 	"github.com/acoshift/middleware"
