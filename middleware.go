@@ -25,7 +25,11 @@ func Middleware(config Config) middleware.Middleware {
 
 	generateID := func() string {
 		b := make([]byte, config.Entropy)
-		rand.Read(b)
+		if _, err := rand.Read(b); err != nil {
+			// this should never happended
+			// or something wrong with OS's pseudorandom generator
+			panic(err)
+		}
 		return base64.URLEncoding.EncodeToString(b)
 	}
 
