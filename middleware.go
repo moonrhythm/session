@@ -17,7 +17,7 @@ func Middleware(config Config) middleware.Middleware {
 
 	// set default config
 	if config.Entropy <= 0 {
-		config.Entropy = 16
+		config.Entropy = 32
 	}
 
 	if len(config.Name) == 0 {
