@@ -2,11 +2,10 @@ package session
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"net/http"
 	"strings"
-
-	"crypto/sha256"
 
 	"github.com/acoshift/middleware"
 )
