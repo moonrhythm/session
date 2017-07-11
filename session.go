@@ -8,11 +8,10 @@ import (
 	"time"
 )
 
-const (
-	_           = iota
-	markSave    // save encoded data to store
-	markRolling //
-	markDestory
+type (
+	markSave    struct{}
+	markRolling struct{}
+	markDestroy struct{}
 )
 
 // Session type
@@ -20,7 +19,7 @@ type Session struct {
 	id          string
 	data        map[interface{}]interface{}
 	rawData     []byte
-	mark        int
+	mark        interface{}
 	encodedData []byte
 
 	// cookie config
@@ -95,11 +94,11 @@ func (s *Session) Del(key interface{}) {
 
 // Destroy destroys session from store
 func (s *Session) Destroy() {
-	s.mark = markDestory
+	s.mark = markDestroy{}
 }
 
 func (s *Session) setCookie(w http.ResponseWriter) {
-	if s.mark == markDestory {
+	if _, ok := s.mark.(markDestroy); ok {
 		http.SetCookie(w, &http.Cookie{
 			Name:     s.Name,
 			Domain:   s.Domain,
@@ -122,9 +121,9 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 				return
 			}
 			// should rolling cookie
-			s.mark = markRolling
+			s.mark = markRolling{}
 		} else {
-			s.mark = markSave
+			s.mark = markSave{}
 		}
 	}
 

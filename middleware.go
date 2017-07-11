@@ -65,8 +65,8 @@ func Middleware(config Config) middleware.Middleware {
 
 			// use defer to alway save session even panic
 			defer func() {
-				switch s.mark {
-				case markDestory:
+				switch s.mark.(type) {
+				case markDestroy:
 					config.Store.Del(s.id)
 				case markSave:
 					// if session was modified, save session to store,
