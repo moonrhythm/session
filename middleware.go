@@ -1,7 +1,10 @@
 package session
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"net/http"
+	"strings"
 
 	"github.com/acoshift/middleware"
 )
@@ -21,16 +24,26 @@ func Middleware(config Config) middleware.Middleware {
 		config.Name = "sess"
 	}
 
+	generateID := func() string {
+		b := make([]byte, config.Entropy)
+		if _, err := rand.Read(b); err != nil {
+			// this should never happended
+			// or something wrong with OS's crypto pseudorandom generator
+			panic(err)
+		}
+		return strings.TrimRight(base64.URLEncoding.EncodeToString(b), "=")
+	}
+
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			s := Session{
-				entropy:  config.Entropy,
-				Name:     config.Name,
-				Domain:   config.Domain,
-				Path:     config.Path,
-				HTTPOnly: config.HTTPOnly,
-				MaxAge:   config.MaxAge,
-				Secure:   (config.Secure == ForceSecure) || (config.Secure == PreferSecure && isTLS(r)),
+				generateID: generateID,
+				Name:       config.Name,
+				Domain:     config.Domain,
+				Path:       config.Path,
+				HTTPOnly:   config.HTTPOnly,
+				MaxAge:     config.MaxAge,
+				Secure:     (config.Secure == ForceSecure) || (config.Secure == PreferSecure && isTLS(r)),
 			}
 
 			// get session key from cookie
@@ -48,7 +61,7 @@ func Middleware(config Config) middleware.Middleware {
 
 			// if session not found, create new session
 			if len(s.id) == 0 {
-				s.id = generateID(s.entropy)
+				s.id = generateID()
 			}
 
 			// use defer to alway save session even panic
