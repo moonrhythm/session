@@ -12,17 +12,20 @@ type (
 	markSave    struct{}
 	markRolling struct{}
 	markDestroy struct{}
+	markRotate  struct{}
 )
 
 // Session type
 type Session struct {
 	id          string
+	oldID       string // for rotate
 	data        map[interface{}]interface{}
 	rawData     []byte
 	mark        interface{}
 	encodedData []byte
 
 	// cookie config
+	entropy  int
 	Name     string
 	Domain   string
 	Path     string
@@ -92,6 +95,14 @@ func (s *Session) Del(key interface{}) {
 	delete(s.data, key)
 }
 
+// Rotate rotates session id
+// use when change user access level to prevent session fixation
+//
+// can not use rotate and destory same time
+func (s *Session) Rotate() {
+	s.mark = markRotate{}
+}
+
 // Destroy destroys session from store
 func (s *Session) Destroy() {
 	s.mark = markDestroy{}
@@ -114,17 +125,23 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 	// set cookie only if session value changed
 	var err error
 	s.encodedData, err = s.encode()
-	if err == nil {
-		if bytes.Compare(s.rawData, s.encodedData) == 0 {
-			if len(s.encodedData) == 0 {
-				// empty session
-				return
-			}
-			// should rolling cookie
-			s.mark = markRolling{}
-		} else {
-			s.mark = markSave{}
+	if err != nil {
+		// this should never happended
+		// or developer don't register struct into gob
+		return
+	}
+	if _, ok := s.mark.(markRotate); ok {
+		s.oldID = s.id
+		s.id = generateID(s.entropy)
+	} else if bytes.Compare(s.rawData, s.encodedData) == 0 {
+		if len(s.encodedData) == 0 {
+			// empty session
+			return
 		}
+		// should rolling cookie
+		s.mark = markRolling{}
+	} else {
+		s.mark = markSave{}
 	}
 
 	http.SetCookie(w, &http.Cookie{
