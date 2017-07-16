@@ -10,7 +10,6 @@ import (
 
 type (
 	markSave    struct{}
-	markRolling struct{}
 	markDestroy struct{}
 	markRotate  struct{}
 )
@@ -26,6 +25,7 @@ type Session struct {
 
 	// cookie config
 	generateID func() string
+	Renew      bool
 	Name       string
 	Domain     string
 	Path       string
@@ -36,9 +36,15 @@ type Session struct {
 
 func init() {
 	gob.Register(map[interface{}]interface{}{})
+	gob.Register(timestampKey{})
 }
 
 type sessionKey struct{}
+
+// session internal data
+type (
+	timestampKey struct{}
+)
 
 // Get gets session from context
 func Get(ctx context.Context) *Session {
@@ -71,6 +77,22 @@ func (s *Session) decode(b []byte) {
 	}
 }
 
+func (s *Session) stamp() {
+	s.data[timestampKey{}] = time.Now().Unix()
+}
+
+func (s *Session) shouldRenew() bool {
+	if !s.Renew {
+		return false
+	}
+	sec, _ := s.data[timestampKey{}].(int64)
+	t := time.Unix(sec, 0)
+	if time.Now().Sub(t) > s.MaxAge/2 {
+		return false
+	}
+	return true
+}
+
 // Get gets data from session
 func (s *Session) Get(key interface{}) interface{} {
 	if s.data == nil {
@@ -101,6 +123,7 @@ func (s *Session) Del(key interface{}) {
 // can not use rotate and destory same time
 func (s *Session) Rotate() {
 	s.mark = markRotate{}
+	s.stamp()
 }
 
 // Destroy destroys session from store
@@ -138,8 +161,11 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 			// empty session
 			return
 		}
-		// should rolling cookie
-		s.mark = markRolling{}
+		if s.shouldRenew() {
+			s.Rotate()
+			s.oldID = s.id
+			s.id = s.generateID()
+		}
 	} else {
 		s.mark = markSave{}
 	}

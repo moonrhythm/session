@@ -46,6 +46,7 @@ func Middleware(config Config) middleware.Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			s := Session{
 				generateID: generateID,
+				Renew:      config.Renew,
 				Name:       config.Name,
 				Domain:     config.Domain,
 				Path:       config.Path,
@@ -70,6 +71,7 @@ func Middleware(config Config) middleware.Middleware {
 			// if session not found, create new session
 			if len(s.id) == 0 {
 				s.id = generateID()
+				s.stamp()
 			}
 
 			// use defer to alway save session even panic
@@ -82,9 +84,6 @@ func Middleware(config Config) middleware.Middleware {
 					// if session was modified, save session to store,
 					// if not don't save to store to prevent store overflow
 					config.Store.Set(hID, s.encodedData, s.MaxAge)
-				case markRolling:
-					// session not modified but not empty
-					config.Store.Exp(hID, config.MaxAge)
 				case markRotate:
 					config.Store.Set(hID, s.encodedData, s.MaxAge)
 					config.Store.Del(hashID(s.oldID))
