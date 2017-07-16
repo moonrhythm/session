@@ -45,14 +45,14 @@ func Middleware(config Config) middleware.Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			s := Session{
-				generateID: generateID,
-				Renew:      config.Renew,
-				Name:       config.Name,
-				Domain:     config.Domain,
-				Path:       config.Path,
-				HTTPOnly:   config.HTTPOnly,
-				MaxAge:     config.MaxAge,
-				Secure:     (config.Secure == ForceSecure) || (config.Secure == PreferSecure && isTLS(r)),
+				generateID:   generateID,
+				DisableRenew: config.DisableRenew,
+				Name:         config.Name,
+				Domain:       config.Domain,
+				Path:         config.Path,
+				HTTPOnly:     config.HTTPOnly,
+				MaxAge:       config.MaxAge,
+				Secure:       (config.Secure == ForceSecure) || (config.Secure == PreferSecure && isTLS(r)),
 			}
 
 			// get session key from cookie
@@ -68,12 +68,6 @@ func Middleware(config Config) middleware.Middleware {
 				// to prevent session fixation attack
 			}
 
-			// if session not found, create new session
-			if len(s.id) == 0 {
-				s.id = generateID()
-				s.stamp()
-			}
-
 			// use defer to alway save session even panic
 			defer func() {
 				hID := hashID(s.id)
@@ -86,7 +80,9 @@ func Middleware(config Config) middleware.Middleware {
 					config.Store.Set(hID, s.encodedData, s.MaxAge)
 				case markRotate:
 					config.Store.Set(hID, s.encodedData, s.MaxAge)
-					config.Store.Del(hashID(s.oldID))
+					if len(s.oldID) > 0 {
+						config.Store.Del(hashID(s.oldID))
+					}
 				}
 			}()
 

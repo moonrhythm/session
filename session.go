@@ -25,13 +25,15 @@ type Session struct {
 
 	// cookie config
 	generateID func() string
-	Renew      bool
 	Name       string
 	Domain     string
 	Path       string
 	HTTPOnly   bool
 	MaxAge     time.Duration
 	Secure     bool
+
+	// disable
+	DisableRenew bool
 }
 
 func init() {
@@ -77,15 +79,11 @@ func (s *Session) decode(b []byte) {
 	}
 }
 
-func (s *Session) stamp() {
-	s.data[timestampKey{}] = time.Now().Unix()
-}
-
 func (s *Session) shouldRenew() bool {
-	if !s.Renew {
+	if s.DisableRenew {
 		return false
 	}
-	sec, _ := s.data[timestampKey{}].(int64)
+	sec, _ := s.Get(timestampKey{}).(int64)
 	t := time.Unix(sec, 0)
 	if time.Now().Sub(t) > s.MaxAge/2 {
 		return false
@@ -123,7 +121,6 @@ func (s *Session) Del(key interface{}) {
 // can not use rotate and destory same time
 func (s *Session) Rotate() {
 	s.mark = markRotate{}
-	s.stamp()
 }
 
 // Destroy destroys session from store
@@ -153,23 +150,28 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		// or developer don't register struct into gob
 		return
 	}
+
+	if s.shouldRenew() {
+		s.Rotate()
+	}
+
 	if _, ok := s.mark.(markRotate); ok {
 		s.oldID = s.id
-		s.id = s.generateID()
 	} else if bytes.Compare(s.rawData, s.encodedData) == 0 {
 		if len(s.encodedData) == 0 {
 			// empty session
 			return
 		}
-		if s.shouldRenew() {
-			s.Rotate()
-			s.oldID = s.id
-			s.id = s.generateID()
-		}
 	} else {
 		s.mark = markSave{}
 	}
 
+	if len(s.id) > 0 {
+		return
+	}
+
+	s.id = s.generateID()
+	s.Set(timestampKey{}, time.Now().Unix())
 	http.SetCookie(w, &http.Cookie{
 		Name:     s.Name,
 		Domain:   s.Domain,

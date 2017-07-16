@@ -9,7 +9,6 @@ type Config struct {
 	Store   Store
 	Entropy int    // session id entropy in byte, default is 32 byte
 	Secret  []byte // session id salt when put to store
-	Renew   bool   // auto renew session by rotate
 
 	// Cookie config
 	Name     string // Cookie name, default is "sess"
@@ -18,6 +17,9 @@ type Config struct {
 	Path     string
 	MaxAge   time.Duration
 	Secure   Secure
+
+	// Disable features
+	DisableRenew bool // disable auto renew session
 }
 
 // Secure config
