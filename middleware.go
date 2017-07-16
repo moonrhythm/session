@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/acoshift/middleware"
 )
@@ -70,6 +71,10 @@ func Middleware(config Config) middleware.Middleware {
 
 			// use defer to alway save session even panic
 			defer func() {
+				if len(s.id) == 0 {
+					return
+				}
+
 				hID := hashID(s.id)
 				switch s.mark.(type) {
 				case markDestroy:
@@ -81,7 +86,7 @@ func Middleware(config Config) middleware.Middleware {
 				case markRotate:
 					config.Store.Set(hID, s.encodedData, s.MaxAge)
 					if len(s.oldID) > 0 {
-						config.Store.Del(hashID(s.oldID))
+						config.Store.Set(hashID(s.oldID), s.encodedData, 5*time.Second)
 					}
 				}
 			}()

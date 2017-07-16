@@ -84,8 +84,11 @@ func (s *Session) shouldRenew() bool {
 		return false
 	}
 	sec, _ := s.Get(timestampKey{}).(int64)
+	if sec <= 0 {
+		return false
+	}
 	t := time.Unix(sec, 0)
-	if time.Now().Sub(t) > s.MaxAge/2 {
+	if time.Now().Sub(t) < s.MaxAge/2 {
 		return false
 	}
 	return true
@@ -157,6 +160,7 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 
 	if _, ok := s.mark.(markRotate); ok {
 		s.oldID = s.id
+		s.id = ""
 	} else if bytes.Compare(s.rawData, s.encodedData) == 0 {
 		if len(s.encodedData) == 0 {
 			// empty session
@@ -172,6 +176,7 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 
 	s.id = s.generateID()
 	s.Set(timestampKey{}, time.Now().Unix())
+	s.encodedData, _ = s.encode()
 	http.SetCookie(w, &http.Cookie{
 		Name:     s.Name,
 		Domain:   s.Domain,
