@@ -153,7 +153,7 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
-	if s.shouldRenew() {
+	if len(s.id) > 0 && s.shouldRenew() {
 		s.Rotate()
 	}
 
