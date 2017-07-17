@@ -43,10 +43,10 @@ func Middleware(config Config) middleware.Middleware {
 			cookie, err := r.Cookie(config.Name)
 			if err == nil && len(cookie.Value) > 0 {
 				// get session data from store
-				s.rawData, err = config.Store.Get(hashID(cookie.Value))
+				b, err := config.Store.Get(hashID(cookie.Value))
 				if err == nil {
 					s.id = cookie.Value
-					s.decode(s.rawData)
+					s.decode(b)
 				}
 				// DO NOT set session id to cookie value if not found in store
 				// to prevent session fixation attack

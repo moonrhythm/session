@@ -19,7 +19,6 @@ type Session struct {
 	id      string
 	oldID   string // for rotate
 	data    map[interface{}]interface{}
-	rawData []byte
 	mark    interface{}
 	changed bool
 
