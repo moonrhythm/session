@@ -75,19 +75,20 @@ func Middleware(config Config) middleware.Middleware {
 					return
 				}
 
-				hID := hashID(s.id)
+				hashedID := hashID(s.id)
 				switch s.mark.(type) {
 				case markDestroy:
-					config.Store.Del(hID)
+					config.Store.Del(hashedID)
 				case markSave:
-					// if session was modified, save session to store,
-					// if not don't save to store to prevent store overflow
-					config.Store.Set(hID, s.encodedData, s.MaxAge)
+					s.Set(timestampKey{}, time.Now().Unix())
+					config.Store.Set(hashedID, s.encode(), s.MaxAge)
 				case markRotate:
-					config.Store.Set(hID, s.encodedData, s.MaxAge)
 					if len(s.oldID) > 0 {
-						config.Store.Set(hashID(s.oldID), s.encodedData, 5*time.Second)
+						s.Set(timestampKey{}, int64(-1))
+						config.Store.Set(hashID(s.oldID), s.encode(), 5*time.Second)
 					}
+					s.Set(timestampKey{}, time.Now().Unix())
+					config.Store.Set(hashedID, s.encode(), s.MaxAge)
 				}
 			}()
 
