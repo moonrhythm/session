@@ -24,13 +24,12 @@ type Session struct {
 	changed bool
 
 	// cookie config
-	generateID func() string
-	Name       string
-	Domain     string
-	Path       string
-	HTTPOnly   bool
-	MaxAge     time.Duration
-	Secure     bool
+	Name     string
+	Domain   string
+	Path     string
+	HTTPOnly bool
+	MaxAge   time.Duration
+	Secure   bool
 
 	// disable
 	DisableRenew bool
@@ -174,7 +173,7 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
-	s.id = s.generateID()
+	s.id = generateID()
 	http.SetCookie(w, &http.Cookie{
 		Name:     s.Name,
 		Domain:   s.Domain,
