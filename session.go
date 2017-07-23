@@ -126,6 +126,11 @@ func (s *Session) Del(key interface{}) {
 	}
 }
 
+// MustSave marks session to save
+func (s *Session) MustSave() {
+	s.changed = true
+}
+
 // Rotate rotates session id
 // use when change user access level to prevent session fixation
 //
