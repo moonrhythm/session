@@ -89,8 +89,9 @@ func TestSessionGetSet(t *testing.T) {
 	)
 
 	h := session.Middleware(session.Config{
-		Name:   "sess",
-		MaxAge: time.Second,
+		Name:         "sess",
+		MaxAge:       time.Second,
+		DisableRenew: true,
 		Store: &mockStore{
 			SetFunc: func(key string, value []byte, ttl time.Duration) error {
 				setCalled++
