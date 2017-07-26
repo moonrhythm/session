@@ -1,6 +1,7 @@
 package session_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -63,16 +64,9 @@ func TestSessionSetInStore(t *testing.T) {
 		w.Write([]byte("ok"))
 	}))
 
-	srv := httptest.NewServer(h)
-	defer srv.Close()
-
-	resp, err := http.Get(srv.URL)
-	if err != nil {
-		t.Fatalf("http get error; %v", err)
-	}
-	if resp.StatusCode != 200 {
-		t.Fatalf("expected status code 200; got %d", resp.StatusCode)
-	}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
 	if !setCalled {
 		t.Fatalf("expected store was called; but not")
 	}
@@ -84,5 +78,57 @@ func TestSessionSetInStore(t *testing.T) {
 	}
 	if setTTL != time.Second {
 		t.Fatalf("expected ttl to be 1s; got %v", setTTL)
+	}
+}
+
+func TestSessionGetSet(t *testing.T) {
+	var (
+		setCalled int
+		setKey    string
+		setValue  []byte
+	)
+
+	h := session.Middleware(session.Config{
+		Name:   "sess",
+		MaxAge: time.Second,
+		Store: &mockStore{
+			SetFunc: func(key string, value []byte, ttl time.Duration) error {
+				setCalled++
+				setKey = key
+				setValue = value
+				return nil
+			},
+			GetFunc: func(key string) ([]byte, error) {
+				if key != setKey {
+					t.Fatalf("expected get key \"%s\"; got \"%s\"", setKey, key)
+				}
+				return setValue, nil
+			},
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context())
+		c, _ := s.Get("test").(int)
+		s.Set("test", c+1)
+		fmt.Fprintf(w, "%d", c)
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+
+	if w.Body.String() != "0" {
+		t.Fatalf("expected response to be 0; got %s", w.Body.String())
+	}
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", w.Header().Get("Set-Cookie"))
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	if w.Body.String() != "1" {
+		t.Fatalf("expected response to be 1; got %s", w.Body.String())
+	}
+
+	if setCalled != 2 {
+		t.Fatalf("expected store set 2 times; but got %d times", setCalled)
 	}
 }
