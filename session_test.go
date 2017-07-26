@@ -10,6 +10,14 @@ import (
 	"github.com/acoshift/session"
 )
 
+func mockHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	s := session.Get(r.Context())
+	s.Set("test", 1)
+	w.Write([]byte("ok"))
+}
+
+var mockHandler = http.HandlerFunc(mockHandlerFunc)
+
 func TestPanicConfig(t *testing.T) {
 	defer func() {
 		err := recover()
@@ -23,11 +31,7 @@ func TestPanicConfig(t *testing.T) {
 func TestDefautConfig(t *testing.T) {
 	h := session.Middleware(session.Config{
 		Store: &mockStore{},
-	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context())
-		s.Set("test", 1)
-		w.Write([]byte("ok"))
-	}))
+	})(mockHandler)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -57,11 +61,7 @@ func TestSessionSetInStore(t *testing.T) {
 				return nil
 			},
 		},
-	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context())
-		s.Set("test", 1)
-		w.Write([]byte("ok"))
-	}))
+	})(mockHandler)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -150,11 +150,7 @@ func TestSecureFlag(t *testing.T) {
 		h := session.Middleware(session.Config{
 			Store:  &mockStore{},
 			Secure: c.flag,
-		})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			s := session.Get(r.Context())
-			s.Set("test", 1)
-			w.Write([]byte("ok"))
-		}))
+		})(mockHandler)
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
