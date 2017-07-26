@@ -60,10 +60,6 @@ func Middleware(config Config) middleware.Middleware {
 
 			// use defer to alway save session even panic
 			defer func() {
-				if len(s.id) == 0 {
-					return
-				}
-
 				hashedID := hashID(s.id)
 				switch s.mark.(type) {
 				case markDestroy:
