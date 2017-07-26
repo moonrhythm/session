@@ -27,6 +27,12 @@ func Middleware(config Config) middleware.Middleware {
 		return strings.TrimRight(base64.URLEncoding.EncodeToString(h.Sum(nil)), "=")
 	}
 
+	if config.DisableHashID {
+		hashID = func(id string) string {
+			return id
+		}
+	}
+
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			s := Session{

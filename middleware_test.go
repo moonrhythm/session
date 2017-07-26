@@ -78,6 +78,14 @@ func TestSessionSetInStore(t *testing.T) {
 	if setTTL != time.Second {
 		t.Fatalf("expected ttl to be 1s; got %v", setTTL)
 	}
+
+	cs := w.Result().Cookies()
+	if len(cs) != 1 {
+		t.Fatalf("expected response has 1 cookie; got %d", len(cs))
+	}
+	if cs[0].Value == setKey {
+		t.Fatalf("expected session id was hashed")
+	}
 }
 
 func TestSessionGetSet(t *testing.T) {
@@ -302,5 +310,31 @@ func TestDestroy(t *testing.T) {
 
 	if !delCalled {
 		t.Fatalf("expected del was called")
+	}
+}
+
+func TestDisableHashID(t *testing.T) {
+	var setKey string
+
+	h := session.Middleware(session.Config{
+		DisableHashID: true,
+		Store: &mockStore{
+			SetFunc: func(key string, value []byte, ttl time.Duration) error {
+				setKey = key
+				return nil
+			},
+		},
+	})(mockHandler)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+
+	cs := w.Result().Cookies()
+	if len(cs) != 1 {
+		t.Fatalf("expected response has 1 cookie; got %d", len(cs))
+	}
+	if cs[0].Value != setKey {
+		t.Fatalf("expected session id was not hashed")
 	}
 }
