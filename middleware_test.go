@@ -200,3 +200,107 @@ func TestHttpOnlyFlag(t *testing.T) {
 		}
 	}
 }
+
+func TestRotate(t *testing.T) {
+	c := 0
+
+	var (
+		setCalled int
+		setKey    string
+		setValue  []byte
+	)
+
+	h := session.Middleware(session.Config{
+		Store: &mockStore{
+			SetFunc: func(key string, value []byte, ttl time.Duration) error {
+				setCalled++
+				if c == 0 {
+					setKey = key
+					setValue = value
+					return nil
+				}
+				if key == setKey {
+					t.Fatalf("expected key after rotate to renew")
+				}
+				return nil
+			},
+			GetFunc: func(key string) ([]byte, error) {
+				return setValue, nil
+			},
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context())
+		if c == 0 {
+			s.Set("test", 1)
+			c = 1
+		} else {
+			s.Rotate()
+		}
+		w.Write([]byte("ok"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", w.Header().Get("Set-Cookie"))
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+
+	if setCalled != 3 {
+		t.Fatalf("expected set was called 3 times; got %d times", setCalled)
+	}
+}
+
+func TestDestroy(t *testing.T) {
+	c := 0
+
+	var (
+		delCalled bool
+		setKey    string
+		setValue  []byte
+	)
+
+	h := session.Middleware(session.Config{
+		Store: &mockStore{
+			SetFunc: func(key string, value []byte, ttl time.Duration) error {
+				setKey = key
+				setValue = value
+				return nil
+			},
+			GetFunc: func(key string) ([]byte, error) {
+				return setValue, nil
+			},
+			DelFunc: func(key string) error {
+				delCalled = true
+				if key != setKey {
+					t.Fatalf("expected destroy old key")
+				}
+				return nil
+			},
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context())
+		if c == 0 {
+			s.Set("test", 1)
+			c = 1
+		} else {
+			s.Destroy()
+		}
+		w.Write([]byte("ok"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", w.Header().Get("Set-Cookie"))
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+
+	if !delCalled {
+		t.Fatalf("expected del was called")
+	}
+}
