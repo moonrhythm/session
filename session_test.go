@@ -131,3 +131,48 @@ func TestSessionGetSet(t *testing.T) {
 		t.Fatalf("expected store set 2 times; but got %d times", setCalled)
 	}
 }
+
+func TestSecureFlag(t *testing.T) {
+	cases := []struct {
+		tls      bool
+		flag     session.Secure
+		expected bool
+	}{
+		{false, session.NoSecure, false},
+		{false, session.ForceSecure, true},
+		{false, session.PreferSecure, false},
+		{true, session.NoSecure, false},
+		{true, session.ForceSecure, true},
+		{true, session.PreferSecure, true},
+	}
+
+	for _, c := range cases {
+		h := session.Middleware(session.Config{
+			Store:  &mockStore{},
+			Secure: c.flag,
+		})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			s := session.Get(r.Context())
+			s.Set("test", 1)
+			w.Write([]byte("ok"))
+		}))
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		if c.tls {
+			r.Header.Set("X-Forwarded-Proto", "https")
+		}
+		h.ServeHTTP(w, r)
+
+		cs := w.Result().Cookies()
+		if len(cs) != 1 {
+			t.Fatalf("expected response has 1 cookie; got %d", len(cs))
+		}
+		if cs[0].Secure != c.expected {
+			srv := "http"
+			if c.tls {
+				srv += "s"
+			}
+			t.Fatalf("expected cookie secure flag %d for %s to be %v; got %v", c.flag, srv, c.expected, cs[0].Secure)
+		}
+	}
+}
