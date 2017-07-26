@@ -12,12 +12,18 @@ func TestMemory(t *testing.T) {
 		t.Fatalf("expected set not error; got %v", err)
 	}
 
-	// wait for cleanup
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(5 * time.Millisecond)
 	b, err := s.Get("a")
 	if b != nil {
 		t.Fatalf("expected expired key return nil value; got %v", b)
 	}
+	if err == nil {
+		t.Fatalf("expected expired key return error; got nil")
+	}
+
+	s.Set("a", []byte("test"), time.Millisecond)
+	time.Sleep(20 * time.Millisecond)
+	_, err = s.Get("a")
 	if err == nil {
 		t.Fatalf("expected expired key return error; got nil")
 	}
