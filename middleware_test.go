@@ -42,6 +42,35 @@ func TestDefautConfig(t *testing.T) {
 	}
 }
 
+func TestEmptySession(t *testing.T) {
+	h := session.Middleware(session.Config{
+		Store: &mockStore{
+			GetFunc: func(key string) ([]byte, error) {
+				t.Fatalf("expected get was not called")
+				return nil, nil
+			},
+			SetFunc: func(key string, value []byte, ttl time.Duration) error {
+				t.Fatalf("expected set was not called")
+				return nil
+			},
+			DelFunc: func(key string) error {
+				t.Fatalf("expected del was not called")
+				return nil
+			},
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	cookie := w.Header().Get("Set-Cookie")
+	if len(cookie) == 0 {
+		t.Fatalf("expected cookie not empty; got empty")
+	}
+}
+
 func TestSessionSetInStore(t *testing.T) {
 	var (
 		setCalled bool
