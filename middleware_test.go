@@ -172,3 +172,31 @@ func TestSecureFlag(t *testing.T) {
 		}
 	}
 }
+
+func TestHttpOnlyFlag(t *testing.T) {
+	cases := []struct {
+		flag bool
+	}{
+		{false},
+		{true},
+	}
+
+	for _, c := range cases {
+		h := session.Middleware(session.Config{
+			Store:    &mockStore{},
+			HTTPOnly: c.flag,
+		})(mockHandler)
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		h.ServeHTTP(w, r)
+
+		cs := w.Result().Cookies()
+		if len(cs) != 1 {
+			t.Fatalf("expected response has 1 cookie; got %d", len(cs))
+		}
+		if cs[0].HttpOnly != c.flag {
+			t.Fatalf("expected HttpOnly flag to be %v; got %v", c.flag, cs[0].HttpOnly)
+		}
+	}
+}
