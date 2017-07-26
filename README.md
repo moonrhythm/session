@@ -5,8 +5,6 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/acoshift/session)](https://goreportcard.com/report/github.com/acoshift/session)
 [![GoDoc](https://godoc.org/github.com/acoshift/session?status.svg)](https://godoc.org/github.com/acoshift/session)
 
-
-
 Session Middleware for Golang
 
 ## Example
