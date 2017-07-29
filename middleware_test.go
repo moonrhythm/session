@@ -28,7 +28,7 @@ func TestPanicConfig(t *testing.T) {
 	session.Middleware(session.Config{})
 }
 
-func TestDefautConfig(t *testing.T) {
+func TestDefaultConfig(t *testing.T) {
 	h := session.Middleware(session.Config{
 		Store: &mockStore{},
 	})(mockHandler)
@@ -365,5 +365,16 @@ func TestDisableHashID(t *testing.T) {
 	}
 	if cs[0].Value != setKey {
 		t.Fatalf("expected session id was not hashed")
+	}
+}
+
+func BenchmarkDefaultConfig(b *testing.B) {
+	h := session.Middleware(session.Config{
+		Store: &mockStore{},
+	})(mockHandler)
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
 	}
 }

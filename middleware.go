@@ -82,7 +82,9 @@ func Middleware(config Config) middleware.Middleware {
 			nr := r.WithContext(Set(r.Context(), &s))
 			nw := sessionWriter{
 				ResponseWriter: w,
-				s:              &s,
+				beforeWriteHeader: func() {
+					s.setCookie(w)
+				},
 			}
 			h.ServeHTTP(&nw, nr)
 		})
