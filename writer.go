@@ -20,6 +20,9 @@ func (w *sessionWriter) Write(b []byte) (int, error) {
 }
 
 func (w *sessionWriter) WriteHeader(code int) {
+	if w.wroteHeader {
+		return
+	}
 	w.wroteHeader = true
 	w.beforeWriteHeader()
 	w.ResponseWriter.WriteHeader(code)
