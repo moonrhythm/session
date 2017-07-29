@@ -17,6 +17,9 @@ type Config struct {
 	MaxAge   time.Duration
 	Secure   Secure
 
+	// Timeout
+	RenewalTimeout time.Duration // time before old session terminate after renew
+
 	// Disable features
 	DisableRenew  bool // disable auto renew session
 	DisableHashID bool // disable hash session id when save to store

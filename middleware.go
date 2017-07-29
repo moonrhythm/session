@@ -67,7 +67,7 @@ func Middleware(config Config) middleware.Middleware {
 				case markRotate:
 					if len(s.oldID) > 0 {
 						s.Set(timestampKey{}, int64(-1))
-						config.Store.Set(hashID(s.oldID), s.encode(), 5*time.Second)
+						config.Store.Set(hashID(s.oldID), s.encode(), config.RenewalTimeout)
 					}
 					s.Set(timestampKey{}, time.Now().Unix())
 					config.Store.Set(hashedID, s.encode(), s.MaxAge)
