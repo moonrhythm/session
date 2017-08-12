@@ -5,6 +5,8 @@ import (
 	"encoding/gob"
 	"net/http"
 	"time"
+
+	"github.com/acoshift/flash"
 )
 
 type (
@@ -19,6 +21,7 @@ type Session struct {
 	data    map[interface{}]interface{}
 	mark    interface{}
 	changed bool
+	flash   flash.Flash
 
 	// cookie config
 	Name     string
@@ -35,14 +38,22 @@ type Session struct {
 func init() {
 	gob.Register(map[interface{}]interface{}{})
 	gob.Register(timestampKey{})
+	gob.Register(flashKey{})
 }
 
 // session internal data
 type (
 	timestampKey struct{}
+	flashKey     struct{}
 )
 
 func (s *Session) encode() []byte {
+	if s.flash != nil {
+		if b, err := s.flash.Encode(); err == nil {
+			s.Set(flashKey{}, b)
+		}
+	}
+
 	if len(s.data) == 0 {
 		return []byte{}
 	}
@@ -165,4 +176,19 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		Expires:  time.Now().Add(s.MaxAge),
 		Secure:   s.Secure,
 	})
+}
+
+// Flash returns flash from session
+func (s *Session) Flash() flash.Flash {
+	s.changed = true
+	if s.flash != nil {
+		return s.flash
+	}
+	if b, ok := s.Get(flashKey{}).([]byte); ok {
+		s.flash, _ = flash.Decode(b)
+	}
+	if s.flash == nil {
+		s.flash = flash.New()
+	}
+	return s.flash
 }
