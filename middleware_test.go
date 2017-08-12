@@ -10,8 +10,10 @@ import (
 	"github.com/acoshift/session"
 )
 
+const sessName = "sess"
+
 func mockHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	s := session.Get(r.Context())
+	s := session.Get(r.Context(), sessName)
 	s.Set("test", 1)
 	w.Write([]byte("ok"))
 }
@@ -66,8 +68,8 @@ func TestEmptySession(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	h.ServeHTTP(w, r)
 	cookie := w.Header().Get("Set-Cookie")
-	if len(cookie) == 0 {
-		t.Fatalf("expected cookie not empty; got empty")
+	if len(cookie) > 0 {
+		t.Fatalf("expected cookie empty")
 	}
 }
 
@@ -142,7 +144,7 @@ func TestSessionGetSet(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context())
+		s := session.Get(r.Context(), sessName)
 		c, _ := s.Get("test").(int)
 		s.Set("test", c+1)
 		fmt.Fprintf(w, "%d", c)
@@ -266,7 +268,7 @@ func TestRotate(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context())
+		s := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("test", 1)
 			c = 1
@@ -318,7 +320,7 @@ func TestDestroy(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context())
+		s := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("test", 1)
 			c = 1

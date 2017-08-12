@@ -68,7 +68,11 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 }
 
 // Save saves session to store and set cookie to response
-func (m *Manager) Save(w *http.ResponseWriter, s *Session) {
+//
+// Save must be called before response header was written
+func (m *Manager) Save(w http.ResponseWriter, s *Session) {
+	s.setCookie(w)
+
 	hashedID := m.hashID(s.id)
 	switch s.mark.(type) {
 	case markDestroy:
