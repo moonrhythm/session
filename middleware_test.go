@@ -410,14 +410,17 @@ func TestFlash(t *testing.T) {
 		session.Middleware(session.Config{Store: memory.New(memory.Config{}), MaxAge: time.Minute}),
 	)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s := session.Get(r.Context(), "sess")
-		f := s.Flash()
 		if i == 0 {
-			f.Set("a", "1")
+			s.Flash().Set("a", "1")
+			s.Flash().Set("b", "2")
 			i = 1
 			w.Write(nil)
 			return
 		}
-		if f.Get("a") != "1" {
+		if s.Flash().Get("a") != "1" {
+			t.Fatalf("expected flash save in session")
+		}
+		if s.Flash().Get("b") != "2" {
 			t.Fatalf("expected flash save in session")
 		}
 		w.Write(nil)
