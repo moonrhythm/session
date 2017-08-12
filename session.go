@@ -2,7 +2,6 @@ package session
 
 import (
 	"bytes"
-	"context"
 	"encoding/gob"
 	"net/http"
 	"time"
@@ -38,23 +37,10 @@ func init() {
 	gob.Register(timestampKey{})
 }
 
-type sessionKey struct{}
-
 // session internal data
 type (
 	timestampKey struct{}
 )
-
-// Get gets session from context
-func Get(ctx context.Context) *Session {
-	s, _ := ctx.Value(sessionKey{}).(*Session)
-	return s
-}
-
-// Set sets session to context
-func Set(ctx context.Context, s *Session) context.Context {
-	return context.WithValue(ctx, sessionKey{}, s)
-}
 
 func (s *Session) encode() []byte {
 	if len(s.data) == 0 {

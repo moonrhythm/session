@@ -10,7 +10,6 @@ type Config struct {
 	Secret []byte // session id salt when put to store
 
 	// Cookie config
-	Name     string // Cookie name, default is "sess"
 	Domain   string
 	HTTPOnly bool
 	Path     string
