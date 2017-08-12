@@ -1,6 +1,7 @@
 package session_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -367,6 +368,37 @@ func TestDisableHashID(t *testing.T) {
 	}
 	if cs[0].Value != setKey {
 		t.Fatalf("expected session id was not hashed")
+	}
+}
+
+func TestSessionMultipleGet(t *testing.T) {
+	h := session.Middleware(session.Config{
+		Store: &mockStore{},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context(), "sess")
+		s.Set("test", 1)
+
+		s = session.Get(r.Context(), "sess")
+		if s.Get("test").(int) != 1 {
+			t.Fatalf("expected get session 2 times must preverse mutated value")
+		}
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+}
+
+func TestEmptyContext(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			t.Fatalf("expected get session from empty context must not panic")
+		}
+	}()
+	s := session.Get(context.Background(), "sess")
+	if s != nil {
+		t.Fatalf("expected get session from empty context returns nil")
 	}
 }
 
