@@ -130,6 +130,14 @@ func (s *Session) Rotate() {
 	s.mark = markRotate{}
 }
 
+// Renew clear all data in current session
+// and rotate session id
+func (s *Session) Renew() {
+	s.changed = true
+	s.data = make(map[interface{}]interface{})
+	s.Rotate()
+}
+
 // Destroy destroys session from store
 func (s *Session) Destroy() {
 	s.mark = markDestroy{}

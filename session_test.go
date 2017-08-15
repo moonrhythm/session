@@ -78,3 +78,12 @@ func TestShouldRenew(t *testing.T) {
 		t.Fatalf("expected sec -3 of max-age 10 should not renew")
 	}
 }
+
+func TestRenew(t *testing.T) {
+	s := Session{}
+	s.Set("a", "1")
+	s.Renew()
+	if s.Get("a") != nil {
+		t.Fatalf("expected renew must delete all data")
+	}
+}
