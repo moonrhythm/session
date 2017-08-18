@@ -290,8 +290,8 @@ func TestRotate(t *testing.T) {
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 
-	if setCalled != 3 {
-		t.Fatalf("expected set was called 3 times; got %d times", setCalled)
+	if setCalled != 2 {
+		t.Fatalf("expected set was called 2 times; got %d times", setCalled)
 	}
 }
 
