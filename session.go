@@ -48,12 +48,6 @@ type (
 )
 
 func (s *Session) encode() []byte {
-	if s.flash != nil {
-		if b, err := s.flash.Encode(); err == nil {
-			s.Set(flashKey{}, b)
-		}
-	}
-
 	if len(s.data) == 0 {
 		return []byte{}
 	}
@@ -159,6 +153,16 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
+	// detect is flash changed
+	if s.flash != nil {
+		b, _ := s.Get(flashKey{}).([]byte)
+		bb, _ := s.flash.Encode()
+		if !bytes.Equal(b, bb) {
+			s.changed = true
+			s.Set(flashKey{}, bb)
+		}
+	}
+
 	if len(s.id) > 0 && s.shouldRenew() {
 		s.Rotate()
 	}
@@ -193,7 +197,6 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 
 // Flash returns flash from session
 func (s *Session) Flash() flash.Flash {
-	s.changed = true
 	if s.flash != nil {
 		return s.flash
 	}
