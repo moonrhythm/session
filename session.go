@@ -128,6 +128,7 @@ func (s *Session) Del(key interface{}) {
 // can not use rotate and destory same time
 func (s *Session) Rotate() {
 	s.mark = markRotate{}
+	s.changed = true
 }
 
 // Renew clear all data in current session

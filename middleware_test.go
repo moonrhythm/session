@@ -253,6 +253,37 @@ func TestRotate(t *testing.T) {
 	assert.Equal(t, 2, setCalled)
 }
 
+func TestRenew(t *testing.T) {
+	c := 0
+
+	h := session.Middleware(session.Config{
+		MaxAge: time.Second,
+		Store:  memory.New(memory.Config{}),
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context(), sessName)
+		if c == 0 {
+			s.Set("test", 1)
+			c = 1
+		} else {
+			assert.Equal(t, 1, s.Get("test"))
+		}
+		w.Write([]byte("ok"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	time.Sleep(time.Millisecond * 600)
+	oldCookie := w.Result().Cookies()[0].Value
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", w.Result().Cookies()[0].String())
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	assert.Len(t, w.Result().Cookies(), 1)
+	assert.NotEqual(t, oldCookie, w.Result().Cookies()[0].Value)
+}
+
 func TestDestroy(t *testing.T) {
 	c := 0
 
