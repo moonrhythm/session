@@ -21,7 +21,7 @@ type Session struct {
 	data    map[interface{}]interface{}
 	mark    interface{}
 	changed bool
-	flash   flash.Flash
+	flash   *flash.Flash
 
 	// cookie config
 	Name     string
@@ -153,14 +153,11 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
-	// detect is flash changed
-	if s.flash != nil {
-		b, _ := s.Get(flashKey{}).([]byte)
-		bb, _ := s.flash.Encode()
-		if !bytes.Equal(b, bb) {
-			s.changed = true
-			s.Set(flashKey{}, bb)
-		}
+	// detect is flash changed and encode new flash data
+	if s.flash != nil && s.flash.Changed() {
+		s.changed = true
+		b, _ := s.flash.Encode()
+		s.Set(flashKey{}, b)
 	}
 
 	if len(s.id) > 0 && s.shouldRenew() {
@@ -196,7 +193,7 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 }
 
 // Flash returns flash from session
-func (s *Session) Flash() flash.Flash {
+func (s *Session) Flash() *flash.Flash {
 	if s.flash != nil {
 		return s.flash
 	}
