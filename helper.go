@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"io"
 	"net/http"
-	"strings"
 )
 
 func isTLS(r *http.Request) bool {
@@ -25,5 +24,5 @@ func generateID() string {
 		// or something wrong with OS's crypto pseudorandom generator
 		panic(err)
 	}
-	return strings.TrimRight(base64.URLEncoding.EncodeToString(b), "=")
+	return base64.RawURLEncoding.EncodeToString(b)
 }
