@@ -5,15 +5,13 @@ import (
 	"encoding/base64"
 	"net/http"
 	"strings"
-
-	"github.com/acoshift/header"
 )
 
 func isTLS(r *http.Request) bool {
 	if r.TLS != nil {
 		return true
 	}
-	if r.Header.Get(header.XForwardedProto) == "https" {
+	if r.Header.Get("X-Forwarded-Proto") == "https" {
 		return true
 	}
 	return false
