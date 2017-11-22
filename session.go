@@ -55,7 +55,7 @@ func (s *Session) encode() []byte {
 	buf := bytes.Buffer{}
 	err := gob.NewEncoder(&buf).Encode(s.data)
 	if err != nil {
-		// this should never happended
+		// this should never happened
 		// or developer don't register type into gob
 		panic("session: can not encode data; " + err.Error())
 	}
