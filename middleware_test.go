@@ -159,6 +159,7 @@ func TestSessionGetSet(t *testing.T) {
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s := session.Get(r.Context(), sessName)
+		assert.NotEmpty(t, s.ID())
 		c, _ := s.Get("test").(int)
 		s.Set("test", c+1)
 		fmt.Fprintf(w, "%d", c)
