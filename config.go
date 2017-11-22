@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Config is the session middleware config
+// Config is the session manager config
 type Config struct {
 	Store  Store
 	Secret []byte // session id salt when put to store
