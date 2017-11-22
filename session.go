@@ -123,7 +123,7 @@ func (s *Session) Pop(key interface{}) interface{} {
 // Rotate rotates session id
 // use when change user access level to prevent session fixation
 //
-// can not use rotate and destory same time
+// can not use rotate and destroy same time
 // Rotate can call only one time
 func (s *Session) Rotate() {
 	if len(s.oldID) > 0 {
