@@ -36,6 +36,10 @@ func TestSessionOperation(t *testing.T) {
 
 	s.Del("a")
 	assert.Nil(t, s.Get("a"), "expected get data after delete to be nil")
+
+	s.Set("b", 1)
+	assert.Equal(t, 1, s.Pop("b"))
+	assert.Nil(t, s.Get("b"))
 }
 
 func TestRenew(t *testing.T) {

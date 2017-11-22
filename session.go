@@ -109,6 +109,17 @@ func (s *Session) Del(key interface{}) {
 	}
 }
 
+// Pop gets data from session then delete it
+func (s *Session) Pop(key interface{}) interface{} {
+	if s.data == nil {
+		return nil
+	}
+	r := s.data[key]
+	s.changed = true
+	delete(s.data, key)
+	return r
+}
+
 // Rotate rotates session id
 // use when change user access level to prevent session fixation
 //
