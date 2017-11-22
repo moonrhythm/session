@@ -14,6 +14,7 @@ type Session struct {
 	id      string // id is the hashed id if enable hash
 	rawID   string
 	oldID   string // for rotate, is the hashed old id if enable hash
+	oldData []byte // is the old encoded data before rotate
 	data    map[interface{}]interface{}
 	destroy bool
 	changed bool
@@ -33,14 +34,12 @@ type Session struct {
 
 func init() {
 	gob.Register(map[interface{}]interface{}{})
-	gob.Register(timestampKey{})
 	gob.Register(flashKey{})
 }
 
 // session internal data
 type (
-	timestampKey struct{}
-	flashKey     struct{}
+	flashKey struct{}
 )
 
 func (s *Session) encode() []byte {
@@ -125,12 +124,18 @@ func (s *Session) Pop(key interface{}) interface{} {
 // use when change user access level to prevent session fixation
 //
 // can not use rotate and destory same time
+// Rotate can call only one time
 func (s *Session) Rotate() {
+	if len(s.oldID) > 0 {
+		return
+	}
+
 	if s.destroy {
 		return
 	}
 
 	s.oldID = s.id
+	s.oldData = s.encode()
 	s.rawID = generateID()
 	if s.IDHashFunc != nil {
 		s.id = s.IDHashFunc(s.rawID)
@@ -210,4 +215,15 @@ func (s *Session) Flash() *flash.Flash {
 		s.flash = flash.New()
 	}
 	return s.flash
+}
+
+// Hijacked checks is session was hijacked,
+// can use only with Manager
+func (s *Session) Hijacked() bool {
+	if t, ok := s.Get(destroyedKey{}).(int64); ok {
+		if t < time.Now().UnixNano()-int64(HijackedTime) {
+			return true
+		}
+	}
+	return false
 }

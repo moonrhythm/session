@@ -3,6 +3,7 @@ package session
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/gob"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +13,17 @@ import (
 type Manager struct {
 	config Config
 	hashID func(id string) string
+}
+
+// manager internal data
+type (
+	timestampKey struct{}
+	destroyedKey struct{} // for detect session hijack
+)
+
+func init() {
+	gob.Register(timestampKey{})
+	gob.Register(destroyedKey{})
 }
 
 // New creates new session manager
@@ -92,19 +104,23 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) {
 		return
 	}
 
-	// check is rotate
-	if len(s.oldID) > 0 {
-		if m.config.RenewalTimeout <= 0 {
-			m.config.Store.Del(s.oldID)
-		} else {
-			s.Set(timestampKey{}, int64(-1)) // disable renew for old session
-			m.config.Store.Set(s.oldID, s.encode(), m.config.RenewalTimeout)
-		}
-	}
-
 	// if session not modified, don't save to store to prevent store overflow
 	if !s.Changed() {
 		return
+	}
+
+	// check is rotate
+	if len(s.oldID) > 0 {
+		if m.config.DeleteOldSession {
+			m.config.Store.Del(s.oldID)
+		} else {
+			// save old session data if not delete
+			var d Session
+			d.decode(s.oldData)
+			d.Set(timestampKey{}, int64(0))
+			d.Set(destroyedKey{}, time.Now().UnixNano())
+			m.config.Store.Set(s.oldID, d.encode(), s.MaxAge)
+		}
 	}
 
 	// save sesion data to store

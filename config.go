@@ -17,8 +17,9 @@ type Config struct {
 	Secure   Secure
 	SameSite SameSite
 
-	// Timeout
-	RenewalTimeout time.Duration // time before old session terminate after renew
+	// DeleteOldSession deletes the old session from store when rotate,
+	// better not to delete old session to avoid user loss session when unstable network
+	DeleteOldSession bool
 
 	// Disable features
 	DisableRenew  bool // disable auto renew session
@@ -45,4 +46,9 @@ const (
 	SameSiteNone   SameSite = ""
 	SameSiteLax    SameSite = "Lax"
 	SameSiteStrict SameSite = "Strict"
+)
+
+// Global Session Config
+var (
+	HijackedTime = 5 * time.Minute
 )
