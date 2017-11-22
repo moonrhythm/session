@@ -1,40 +1,58 @@
-package session
+package session_test
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/acoshift/session"
 )
 
-func TestShouldRenew(t *testing.T) {
-	m := Manager{
-		config: Config{
-			DisableRenew: false,
+func TestManagerGetSave(t *testing.T) {
+	var (
+		setKey   string
+		setValue []byte
+	)
+
+	m := session.New(session.Config{
+		MaxAge:       time.Second,
+		DisableRenew: true,
+		Store: &mockStore{
+			SetFunc: func(key string, value []byte, ttl time.Duration) error {
+				setKey = key
+				setValue = value
+				return nil
+			},
+			GetFunc: func(key string) ([]byte, error) {
+				assert.Equal(t, setKey, key)
+				return setValue, nil
+			},
 		},
+	})
+
+	h := func(w http.ResponseWriter, r *http.Request) {
+		s := m.Get(r, sessName)
+		assert.NotEmpty(t, s.ID())
+		c, _ := s.Get("test").(int)
+		s.Set("test", c+1)
+		fmt.Fprintf(w, "%d", c)
+
+		m.Save(w, s)
 	}
 
-	s := &Session{}
-	s.Set(timestampKey{}, int64(-1))
-	assert.False(t, m.shouldRenewSession(s), "expected sec -1 should not renew")
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h(w, r)
 
-	s.Set(timestampKey{}, int64(0))
-	assert.False(t, m.shouldRenewSession(s), "expected sec 0 should not renew")
+	assert.Equal(t, "0", w.Body.String())
 
-	now := time.Now().Unix()
-
-	s.MaxAge = 10 * time.Second
-	s.Set(timestampKey{}, now-7)
-	assert.True(t, m.shouldRenewSession(s), "expected sec -7 of max-age 10 should renew")
-
-	s.Set(timestampKey{}, now-5)
-	assert.True(t, m.shouldRenewSession(s), "expected sec -5 of max-age 10 should renew")
-
-	s.Set(timestampKey{}, now-3)
-	assert.False(t, m.shouldRenewSession(s), "expected sec -3 of max-age 10 should not renew")
-
-	// test disable renew
-	m.config.DisableRenew = true
-	s.Set(timestampKey{}, now-7)
-	assert.False(t, m.shouldRenewSession(s), "expected disable renew should not renew")
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", w.Header().Get("Set-Cookie"))
+	w = httptest.NewRecorder()
+	h(w, r)
+	assert.Equal(t, "1", w.Body.String())
 }
