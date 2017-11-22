@@ -300,7 +300,15 @@ func TestRotate(t *testing.T) {
 			c = 1
 		} else if c == 1 {
 			s.Set("test", 2)
+
+			// test rotate multiple time should do nothing
+			oldID := s.ID()
 			s.Rotate()
+			newID := s.ID()
+			assert.NotEqual(t, oldID, newID)
+			s.Rotate()
+			assert.Equal(t, newID, s.ID())
+
 			s.Set("test", 3)
 			c = 2
 		}
@@ -327,6 +335,68 @@ func TestRotate(t *testing.T) {
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 	assert.Equal(t, "2", w.Body.String())
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", sess2)
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	assert.Equal(t, "3", w.Body.String())
+}
+
+func TestRotateDeleteOldSession(t *testing.T) {
+	c := 0
+	setValue := make(map[string][]byte)
+
+	h := session.Middleware(session.Config{
+		DisableRenew:     true,
+		DeleteOldSession: true,
+		Store: &mockStore{
+			SetFunc: func(key string, value []byte, ttl time.Duration) error {
+				setValue[key] = value
+				return nil
+			},
+			GetFunc: func(key string) ([]byte, error) {
+				return setValue[key], nil
+			},
+			DelFunc: func(key string) error {
+				setValue[key] = nil
+				return nil
+			},
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context(), sessName)
+		if c == 0 {
+			s.Set("test", 1)
+			c = 1
+		} else if c == 1 {
+			s.Set("test", 2)
+			s.Rotate()
+			s.Set("test", 3)
+			c = 2
+		}
+		fmt.Fprint(w, s.Get("test"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	assert.Equal(t, "1", w.Body.String())
+
+	sess1 := w.Header().Get("Set-Cookie")
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", sess1)
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	assert.Equal(t, "3", w.Body.String())
+
+	sess2 := w.Header().Get("Set-Cookie")
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", sess1)
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	assert.Equal(t, "<nil>", w.Body.String())
 
 	r = httptest.NewRequest(http.MethodGet, "/", nil)
 	r.Header.Set("Cookie", sess2)

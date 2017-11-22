@@ -27,6 +27,7 @@ func TestEncodeUnregisterType(t *testing.T) {
 func TestSessionOperation(t *testing.T) {
 	s := Session{}
 	assert.Nil(t, s.Get("a"), "expected get data from empty session return nil")
+	assert.Nil(t, s.Pop("a"), "expected pop data from empty session return nil")
 
 	s.Del("a")
 	assert.Nil(t, s.data)
