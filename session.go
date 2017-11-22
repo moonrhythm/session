@@ -26,6 +26,7 @@ type Session struct {
 	HTTPOnly bool
 	MaxAge   time.Duration
 	Secure   bool
+	SameSite SameSite
 
 	IDHashFunc func(id string) string
 }
@@ -182,15 +183,18 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		s.Set(flashKey{}, b)
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     s.Name,
-		Domain:   s.Domain,
-		Path:     s.Path,
-		HttpOnly: s.HTTPOnly,
-		Value:    s.rawID,
-		MaxAge:   int(s.MaxAge / time.Second),
-		Expires:  time.Now().Add(s.MaxAge),
-		Secure:   s.Secure,
+	setCookie(w, &cookie{
+		Cookie: http.Cookie{
+			Name:     s.Name,
+			Domain:   s.Domain,
+			Path:     s.Path,
+			HttpOnly: s.HTTPOnly,
+			Value:    s.rawID,
+			MaxAge:   int(s.MaxAge / time.Second),
+			Expires:  time.Now().Add(s.MaxAge),
+			Secure:   s.Secure,
+		},
+		SameSite: s.SameSite,
 	})
 }
 

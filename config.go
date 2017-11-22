@@ -15,6 +15,7 @@ type Config struct {
 	Path     string
 	MaxAge   time.Duration
 	Secure   Secure
+	SameSite SameSite
 
 	// Timeout
 	RenewalTimeout time.Duration // time before old session terminate after renew
@@ -27,9 +28,21 @@ type Config struct {
 // Secure config
 type Secure int
 
-// Secure configs
+// Secure values
 const (
 	NoSecure     Secure = iota
 	PreferSecure        // if request is https will set secure cookie
 	ForceSecure         // always set secure cookie
+)
+
+// SameSite config
+//
+// http://httpwg.org/http-extensions/draft-ietf-httpbis-cookie-same-site.html
+type SameSite string
+
+// SameSite values
+const (
+	SameSiteNone   SameSite = ""
+	SameSiteLax    SameSite = "Lax"
+	SameSiteStrict SameSite = "Strict"
 )

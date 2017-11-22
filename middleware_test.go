@@ -236,6 +236,35 @@ func TestHttpOnlyFlag(t *testing.T) {
 	}
 }
 
+func TestSameSiteFlag(t *testing.T) {
+	cases := []struct {
+		flag session.SameSite
+	}{
+		{session.SameSiteNone},
+		{session.SameSiteLax},
+		{session.SameSiteStrict},
+	}
+
+	for _, c := range cases {
+		h := session.Middleware(session.Config{
+			Store:    &mockStore{},
+			SameSite: c.flag,
+		})(mockHandler)
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		h.ServeHTTP(w, r)
+
+		cs := w.Result().Cookies()
+		assert.Len(t, cs, 1)
+		if c.flag == session.SameSiteNone {
+			assert.Len(t, cs[0].Unparsed, 0)
+		} else {
+			assert.Equal(t, "SameSite="+string(c.flag), cs[0].Unparsed[0])
+		}
+	}
+}
+
 func TestRotate(t *testing.T) {
 	c := 0
 

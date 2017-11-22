@@ -48,6 +48,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		HTTPOnly:   m.config.HTTPOnly,
 		MaxAge:     m.config.MaxAge,
 		Secure:     (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r)),
+		SameSite:   m.config.SameSite,
 		IDHashFunc: m.hashID,
 	}
 
