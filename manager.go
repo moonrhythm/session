@@ -42,26 +42,33 @@ func New(config Config) *Manager {
 // Get retrieves session from request
 func (m *Manager) Get(r *http.Request, name string) *Session {
 	s := Session{
-		DisableRenew: m.config.DisableRenew,
-		Name:         name,
-		Domain:       m.config.Domain,
-		Path:         m.config.Path,
-		HTTPOnly:     m.config.HTTPOnly,
-		MaxAge:       m.config.MaxAge,
-		Secure:       (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r)),
+		Name:       name,
+		Domain:     m.config.Domain,
+		Path:       m.config.Path,
+		HTTPOnly:   m.config.HTTPOnly,
+		MaxAge:     m.config.MaxAge,
+		Secure:     (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r)),
+		IDHashFunc: m.hashID,
 	}
 
 	// get session key from cookie
 	cookie, err := r.Cookie(name)
 	if err == nil && len(cookie.Value) > 0 {
+		hashedID := m.hashID(cookie.Value)
+
 		// get session data from store
-		b, err := m.config.Store.Get(m.hashID(cookie.Value))
+		b, err := m.config.Store.Get(hashedID)
 		if err == nil {
-			s.id = cookie.Value
+			s.id = hashedID
 			s.decode(b)
 		}
 		// DO NOT set session id to cookie value if not found in store
 		// to prevent session fixation attack
+	}
+
+	if len(s.id) == 0 {
+		s.rawID = generateID()
+		s.id = m.hashID(s.rawID)
 	}
 
 	return &s
@@ -71,28 +78,50 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 //
 // Save must be called before response header was written
 func (m *Manager) Save(w http.ResponseWriter, s *Session) {
+	// check is session should renew
+	if m.shouldRenewSession(s) {
+		// use rotate to renew session
+		s.Rotate()
+	}
+
 	s.setCookie(w)
 
-	hashedID := m.hashID(s.id)
-	switch s.mark.(type) {
-	case markDestroy:
-		m.config.Store.Del(hashedID)
-	case markRotate:
-		if len(s.oldID) > 0 {
-			hashedOldID := m.hashID(s.oldID)
-			if m.config.RenewalTimeout <= 0 {
-				m.config.Store.Del(hashedOldID)
-			} else {
-				s.Set(timestampKey{}, int64(-1))
-				m.config.Store.Set(hashedOldID, s.encode(), m.config.RenewalTimeout)
-			}
-		}
-		s.Set(timestampKey{}, time.Now().Unix())
-		m.config.Store.Set(hashedID, s.encode(), s.MaxAge)
-	default:
-		if s.changed {
-			s.Set(timestampKey{}, time.Now().Unix())
-			m.config.Store.Set(hashedID, s.encode(), s.MaxAge)
+	if s.destroy {
+		m.config.Store.Del(s.id)
+		return
+	}
+
+	// check is rotate
+	if len(s.oldID) > 0 {
+		if m.config.RenewalTimeout <= 0 {
+			m.config.Store.Del(s.oldID)
+		} else {
+			s.Set(timestampKey{}, int64(-1)) // disable renew for old session
+			m.config.Store.Set(s.oldID, s.encode(), m.config.RenewalTimeout)
 		}
 	}
+
+	// if session not modified, don't save to store to prevent store overflow
+	if !s.Changed() {
+		return
+	}
+
+	// save sesion data to store
+	s.Set(timestampKey{}, time.Now().Unix())
+	m.config.Store.Set(s.id, s.encode(), s.MaxAge)
+}
+
+func (m *Manager) shouldRenewSession(s *Session) bool {
+	if m.config.DisableRenew {
+		return false
+	}
+	sec, _ := s.Get(timestampKey{}).(int64)
+	if sec <= 0 {
+		return false
+	}
+	t := time.Unix(sec, 0)
+	if time.Now().Sub(t) < s.MaxAge/2 {
+		return false
+	}
+	return true
 }
