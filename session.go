@@ -182,12 +182,6 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
-	// detect is flash changed and encode new flash data
-	if s.flash != nil && s.flash.Changed() {
-		b, _ := s.flash.Encode()
-		s.Set(flashKey{}, b)
-	}
-
 	setCookie(w, &cookie{
 		Cookie: http.Cookie{
 			Name:     s.Name,
