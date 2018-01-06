@@ -42,9 +42,9 @@ type (
 	flashKey struct{}
 )
 
-func (s *Session) encode() []byte {
+func (s *Session) MarshalBinary() ([]byte, error) {
 	if len(s.data) == 0 {
-		return []byte{}
+		return []byte{}, nil
 	}
 
 	buf := bytes.Buffer{}
@@ -52,16 +52,18 @@ func (s *Session) encode() []byte {
 	if err != nil {
 		// this should never happened
 		// or developer don't register type into gob
-		panic("session: can not encode data; " + err.Error())
+		return nil, err
+		// panic("session: can not encode data; " + err.Error())
 	}
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
-func (s *Session) decode(b []byte) {
+func (s *Session) UnmarshalBinary(b []byte) error {
 	s.data = make(map[interface{}]interface{})
 	if len(b) > 0 {
-		gob.NewDecoder(bytes.NewReader(b)).Decode(&s.data)
+		return gob.NewDecoder(bytes.NewReader(b)).Decode(&s.data)
 	}
+	return nil
 }
 
 // ID returns session id or hashed session id if enable hash id
@@ -135,7 +137,7 @@ func (s *Session) Rotate() {
 	}
 
 	s.oldID = s.id
-	s.oldData = s.encode()
+	s.oldData, _ = s.MarshalBinary()
 	s.rawID = generateID()
 	if s.IDHashFunc != nil {
 		s.id = s.IDHashFunc(s.rawID)
