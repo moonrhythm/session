@@ -73,7 +73,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		b, err := m.config.Store.Get(hashedID)
 		if err == nil {
 			s.id = hashedID
-			s.decode(b)
+			s.UnmarshalBinary(b)
 		}
 		// DO NOT set session id to cookie value if not found in store
 		// to prevent session fixation attack
@@ -90,7 +90,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 // Save saves session to store and set cookie to response
 //
 // Save must be called before response header was written
-func (m *Manager) Save(w http.ResponseWriter, s *Session) {
+func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	// check is session should renew
 	if m.shouldRenewSession(s) {
 		// use rotate to renew session
@@ -101,7 +101,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) {
 
 	if s.destroy {
 		m.config.Store.Del(s.id)
-		return
+		return nil
 	}
 
 	// detect is flash changed and encode new flash data
@@ -112,7 +112,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) {
 
 	// if session not modified, don't save to store to prevent store overflow
 	if !s.Changed() {
-		return
+		return nil
 	}
 
 	// check is rotate
@@ -122,16 +122,26 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) {
 		} else {
 			// save old session data if not delete
 			var d Session
-			d.decode(s.oldData)
+			d.UnmarshalBinary(s.oldData)
 			d.Set(timestampKey{}, int64(0))
 			d.Set(destroyedKey{}, time.Now().UnixNano())
-			m.config.Store.Set(s.oldID, d.encode(), s.MaxAge)
+			b, err := d.MarshalBinary()
+			if err != nil {
+				return err
+			}
+			m.config.Store.Set(s.oldID, b, s.MaxAge)
 		}
 	}
 
 	// save sesion data to store
 	s.Set(timestampKey{}, time.Now().Unix())
-	m.config.Store.Set(s.id, s.encode(), s.MaxAge)
+	b, err := s.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	m.config.Store.Set(s.id, b, s.MaxAge)
+
+	return nil
 }
 
 func (m *Manager) shouldRenewSession(s *Session) bool {
