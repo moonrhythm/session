@@ -50,10 +50,7 @@ func (s *Session) MarshalBinary() ([]byte, error) {
 	buf := bytes.Buffer{}
 	err := gob.NewEncoder(&buf).Encode(s.data)
 	if err != nil {
-		// this should never happened
-		// or developer don't register type into gob
 		return nil, err
-		// panic("session: can not encode data; " + err.Error())
 	}
 	return buf.Bytes(), nil
 }
