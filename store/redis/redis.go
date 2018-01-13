@@ -52,6 +52,9 @@ func (s *redisStore) Del(key string) error {
 }
 
 func (s *redisStore) Touch(key string, ttl time.Duration) error {
+	if ttl <= 0 {
+		return nil
+	}
 	c := s.pool.Get()
 	defer c.Close()
 	_, err := c.Do("EXPIRE", s.prefix+key, int64(ttl/time.Second))
