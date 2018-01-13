@@ -3,7 +3,6 @@ package session
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/gob"
 	"net/http"
 	"strings"
 	"time"
@@ -16,15 +15,10 @@ type Manager struct {
 }
 
 // manager internal data
-type (
-	timestampKey struct{}
-	destroyedKey struct{} // for detect session hijack
+const (
+	timestampKey = "session/timestamp"
+	destroyedKey = "session/destroyed" // for detect session hijack
 )
-
-func init() {
-	gob.Register(timestampKey{})
-	gob.Register(destroyedKey{})
-}
 
 // New creates new session manager
 func New(config Config) *Manager {
@@ -106,7 +100,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	// detect is flash changed and encode new flash data
 	if s.flash != nil && s.flash.Changed() {
 		b, _ := s.flash.Encode()
-		s.Set(flashKey{}, b)
+		s.Set(flashKey, b)
 	}
 
 	// if session not modified, don't save to store to prevent store overflow
@@ -120,8 +114,8 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 			m.config.Store.Del(s.oldID)
 		} else {
 			// save old session data if not delete
-			s.oldData[timestampKey{}] = int64(0)
-			s.oldData[destroyedKey{}] = time.Now().UnixNano()
+			s.oldData[timestampKey] = int64(0)
+			s.oldData[destroyedKey] = time.Now().UnixNano()
 			err := m.config.Store.Set(s.oldID, s.oldData, s.MaxAge)
 			if err != nil {
 				return err
@@ -130,7 +124,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	}
 
 	// save sesion data to store
-	s.Set(timestampKey{}, time.Now().Unix())
+	s.Set(timestampKey, time.Now().Unix())
 	err := m.config.Store.Set(s.id, s.data, s.MaxAge)
 	return err
 }
@@ -139,7 +133,7 @@ func (m *Manager) shouldRenewSession(s *Session) bool {
 	if m.config.DisableRenew {
 		return false
 	}
-	sec, _ := s.Get(timestampKey{}).(int64)
+	sec, _ := s.Get(timestampKey).(int64)
 	if sec <= 0 {
 		return false
 	}
