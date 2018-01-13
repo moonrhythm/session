@@ -1,21 +1,25 @@
 package session_test
 
-import "time"
+import (
+	"time"
+
+	"github.com/acoshift/session"
+)
 
 type mockStore struct {
-	GetFunc func(string) ([]byte, error)
-	SetFunc func(string, []byte, time.Duration) error
+	GetFunc func(string) (session.SessionData, error)
+	SetFunc func(string, session.SessionData, time.Duration) error
 	DelFunc func(string) error
 }
 
-func (m *mockStore) Get(key string) ([]byte, error) {
+func (m *mockStore) Get(key string) (session.SessionData, error) {
 	if m.GetFunc == nil {
 		return nil, nil
 	}
 	return m.GetFunc(key)
 }
 
-func (m *mockStore) Set(key string, value []byte, ttl time.Duration) error {
+func (m *mockStore) Set(key string, value session.SessionData, ttl time.Duration) error {
 	if m.SetFunc == nil {
 		return nil
 	}

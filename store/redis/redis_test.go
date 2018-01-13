@@ -4,9 +4,11 @@ import (
 	"testing"
 	"time"
 
-	store "github.com/acoshift/session/store/redis"
 	"github.com/garyburd/redigo/redis"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/acoshift/session"
+	store "github.com/acoshift/session/store/redis"
 )
 
 func TestRedis(t *testing.T) {
@@ -15,7 +17,11 @@ func TestRedis(t *testing.T) {
 			return redis.Dial("tcp", "localhost:6379")
 		},
 	}})
-	err := s.Set("a", []byte("test"), time.Second)
+
+	data := make(session.SessionData)
+	data["test"] = "123"
+
+	err := s.Set("a", data, time.Second)
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -23,15 +29,15 @@ func TestRedis(t *testing.T) {
 	assert.Nil(t, b, "expected expired key return nil")
 	assert.Error(t, err)
 
-	s.Set("a", []byte("test"), time.Second)
+	s.Set("a", data, time.Second)
 	time.Sleep(2 * time.Second)
 	_, err = s.Get("a")
 	assert.Error(t, err, "expected expired key return error")
 
-	s.Set("a", []byte("test"), time.Second)
+	s.Set("a", data, time.Second)
 	b, err = s.Get("a")
 	assert.NoError(t, err)
-	assert.Equal(t, "test", string(b))
+	assert.Equal(t, data, b)
 
 	err = s.Touch("a", time.Minute)
 	assert.NoError(t, err)
@@ -50,10 +56,14 @@ func TestRedisWithoutMaxAge(t *testing.T) {
 			return redis.Dial("tcp", "localhost:6379")
 		},
 	}})
-	err := s.Set("a", []byte("test"), 0)
+
+	data := make(session.SessionData)
+	data["test"] = "123"
+
+	err := s.Set("a", data, 0)
 	assert.NoError(t, err)
 
 	b, err := s.Get("a")
 	assert.NoError(t, err)
-	assert.Equal(t, "test", string(b))
+	assert.Equal(t, data, b)
 }
