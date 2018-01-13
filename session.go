@@ -1,7 +1,6 @@
 package session
 
 import (
-	"bytes"
 	"encoding/gob"
 	"net/http"
 	"time"
@@ -9,13 +8,16 @@ import (
 	"github.com/acoshift/flash"
 )
 
+// Data stores session data
+type Data map[interface{}]interface{}
+
 // Session type
 type Session struct {
 	id      string // id is the hashed id if enable hash
 	rawID   string
 	oldID   string // for rotate, is the hashed old id if enable hash
-	oldData []byte // is the old encoded data before rotate
-	data    map[interface{}]interface{}
+	oldData Data   // is the old encoded data before rotate
+	data    Data
 	destroy bool
 	changed bool
 	flash   *flash.Flash
@@ -33,35 +35,23 @@ type Session struct {
 }
 
 func init() {
-	gob.Register(map[interface{}]interface{}{})
+	gob.Register(Data{})
 	gob.Register(flashKey{})
+}
+
+// Clone clones session data
+func (data Data) Clone() Data {
+	r := make(Data)
+	for k, v := range data {
+		r[k] = v
+	}
+	return r
 }
 
 // session internal data
 type (
 	flashKey struct{}
 )
-
-func (s *Session) MarshalBinary() ([]byte, error) {
-	if len(s.data) == 0 {
-		return []byte{}, nil
-	}
-
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(s.data)
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-func (s *Session) UnmarshalBinary(b []byte) error {
-	s.data = make(map[interface{}]interface{})
-	if len(b) > 0 {
-		return gob.NewDecoder(bytes.NewReader(b)).Decode(&s.data)
-	}
-	return nil
-}
 
 // ID returns session id or hashed session id if enable hash id
 func (s *Session) ID() string {
@@ -134,7 +124,7 @@ func (s *Session) Rotate() {
 	}
 
 	s.oldID = s.id
-	s.oldData, _ = s.MarshalBinary()
+	s.oldData = s.data.Clone()
 	s.rawID = generateID()
 	if s.IDHashFunc != nil {
 		s.id = s.IDHashFunc(s.rawID)

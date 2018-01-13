@@ -4,13 +4,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/acoshift/session"
 	store "github.com/acoshift/session/store/memory"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMemory(t *testing.T) {
 	s := store.New(store.Config{GCInterval: 10 * time.Millisecond})
-	err := s.Set("a", []byte("test"), time.Millisecond)
+
+	data := make(session.Data)
+	data["test"] = "123"
+
+	err := s.Set("a", data, time.Millisecond)
 	assert.NoError(t, err)
 
 	time.Sleep(5 * time.Millisecond)
@@ -18,15 +24,15 @@ func TestMemory(t *testing.T) {
 	assert.Nil(t, b)
 	assert.Error(t, err)
 
-	s.Set("a", []byte("test"), time.Millisecond)
+	s.Set("a", data, time.Millisecond)
 	time.Sleep(20 * time.Millisecond)
 	_, err = s.Get("a")
 	assert.Error(t, err, "expected expired key return error")
 
-	s.Set("a", []byte("test"), time.Second)
+	s.Set("a", data, time.Second)
 	b, err = s.Get("a")
 	assert.NoError(t, err)
-	assert.Equal(t, "test", string(b))
+	assert.Equal(t, data, b)
 
 	err = s.Touch("a", time.Minute)
 	assert.NoError(t, err)
@@ -41,10 +47,14 @@ func TestMemory(t *testing.T) {
 
 func TestMemoryWithoutTTL(t *testing.T) {
 	s := store.New(store.Config{GCInterval: 10 * time.Millisecond})
-	err := s.Set("a", []byte("test"), 0)
+
+	data := make(session.Data)
+	data["test"] = "123"
+
+	err := s.Set("a", data, 0)
 	assert.NoError(t, err)
 
 	b, err := s.Get("a")
 	assert.NoError(t, err)
-	assert.Equal(t, "test", string(b))
+	assert.Equal(t, data, b)
 }

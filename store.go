@@ -6,8 +6,8 @@ import (
 
 // Store interface
 type Store interface {
-	Get(key string) ([]byte, error)
-	Set(key string, value []byte, ttl time.Duration) error
+	Get(key string) (Data, error)
+	Set(key string, value Data, ttl time.Duration) error
 	Del(key string) error
 	Touch(key string, ttl time.Duration) error
 }

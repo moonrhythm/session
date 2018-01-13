@@ -70,10 +70,9 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		hashedID := m.hashID(cookie.Value)
 
 		// get session data from store
-		b, err := m.config.Store.Get(hashedID)
+		s.data, err = m.config.Store.Get(hashedID)
 		if err == nil {
 			s.id = hashedID
-			s.UnmarshalBinary(b)
 		}
 		// DO NOT set session id to cookie value if not found in store
 		// to prevent session fixation attack
@@ -121,27 +120,19 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 			m.config.Store.Del(s.oldID)
 		} else {
 			// save old session data if not delete
-			var d Session
-			d.UnmarshalBinary(s.oldData)
-			d.Set(timestampKey{}, int64(0))
-			d.Set(destroyedKey{}, time.Now().UnixNano())
-			b, err := d.MarshalBinary()
+			s.oldData[timestampKey{}] = int64(0)
+			s.oldData[destroyedKey{}] = time.Now().UnixNano()
+			err := m.config.Store.Set(s.oldID, s.oldData, s.MaxAge)
 			if err != nil {
 				return err
 			}
-			m.config.Store.Set(s.oldID, b, s.MaxAge)
 		}
 	}
 
 	// save sesion data to store
 	s.Set(timestampKey{}, time.Now().Unix())
-	b, err := s.MarshalBinary()
-	if err != nil {
-		return err
-	}
-	m.config.Store.Set(s.id, b, s.MaxAge)
-
-	return nil
+	err := m.config.Store.Set(s.id, s.data, s.MaxAge)
+	return err
 }
 
 func (m *Manager) shouldRenewSession(s *Session) bool {

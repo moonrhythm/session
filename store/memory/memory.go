@@ -1,6 +1,8 @@
 package memory
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"sync"
 	"time"
@@ -54,7 +56,7 @@ func (s *memoryStore) GC() {
 
 var errNotFound = errors.New("memory: session not found")
 
-func (s *memoryStore) Get(key string) ([]byte, error) {
+func (s *memoryStore) Get(key string) (session.Data, error) {
 	s.m.RLock()
 	defer s.m.RUnlock()
 	v := s.l[key]
@@ -64,12 +66,23 @@ func (s *memoryStore) Get(key string) ([]byte, error) {
 	if !v.exp.IsZero() && v.exp.Before(time.Now()) {
 		return nil, errNotFound
 	}
-	return v.data, nil
+	var sessData session.Data
+	err := gob.NewDecoder(bytes.NewReader(v.data)).Decode(&sessData)
+	if err != nil {
+		return nil, err
+	}
+	return sessData, nil
 }
 
-func (s *memoryStore) Set(key string, value []byte, ttl time.Duration) error {
+func (s *memoryStore) Set(key string, value session.Data, ttl time.Duration) error {
+	var buf bytes.Buffer
+	err := gob.NewEncoder(&buf).Encode(value)
+	if err != nil {
+		return err
+	}
+
 	s.m.Lock()
-	it := &item{data: value}
+	it := &item{data: buf.Bytes()}
 	if ttl > 0 {
 		it.exp = time.Now().Add(ttl)
 	}
