@@ -84,3 +84,15 @@ func (s *memoryStore) Del(key string) error {
 	s.m.Unlock()
 	return nil
 }
+
+func (s *memoryStore) Touch(key string, ttl time.Duration) error {
+	if ttl <= 0 {
+		return nil
+	}
+	s.m.Lock()
+	if it, ok := s.l[key]; ok {
+		it.exp = time.Now().Add(ttl)
+	}
+	s.m.Unlock()
+	return nil
+}

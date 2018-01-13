@@ -28,3 +28,7 @@ func (m *mockStore) Del(key string) error {
 	}
 	return m.DelFunc(key)
 }
+
+func (m *mockStore) Touch(key string, ttl time.Duration) error {
+	return nil
+}
