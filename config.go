@@ -17,7 +17,7 @@ type Config struct {
 	Secure   Secure
 	SameSite SameSite
 
-	// DeleteOldSession deletes the old session from store when rotate,
+	// DeleteOldSession deletes the old session from store when regenerate,
 	// better not to delete old session to avoid user loss session when unstable network
 	DeleteOldSession bool
 
