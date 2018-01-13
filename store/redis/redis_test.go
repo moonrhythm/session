@@ -33,6 +33,12 @@ func TestRedis(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "test", string(b))
 
+	err = s.Touch("a", time.Minute)
+	assert.NoError(t, err)
+	time.Sleep(time.Second)
+	_, err = s.Get("a")
+	assert.NoError(t, err)
+
 	s.Del("a")
 	_, err = s.Get("a")
 	assert.Error(t, err)
