@@ -92,8 +92,8 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	// check is session should renew
 	if m.shouldRenewSession(s) {
-		// use rotate to renew session
-		s.Rotate()
+		// use regenerate to renew session
+		s.Regenerate()
 	}
 
 	s.setCookie(w)
@@ -114,7 +114,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 		return nil
 	}
 
-	// check is rotate
+	// check is regenerate
 	if len(s.oldID) > 0 {
 		if m.config.DeleteOldSession {
 			m.config.Store.Del(s.oldID)

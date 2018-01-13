@@ -15,8 +15,8 @@ type Data map[interface{}]interface{}
 type Session struct {
 	id      string // id is the hashed id if enable hash
 	rawID   string
-	oldID   string // for rotate, is the hashed old id if enable hash
-	oldData Data   // is the old encoded data before rotate
+	oldID   string // for regenerate, is the hashed old id if enable hash
+	oldData Data   // is the old encoded data before regenerate
 	data    Data
 	destroy bool
 	changed bool
@@ -109,12 +109,12 @@ func (s *Session) Pop(key interface{}) interface{} {
 	return r
 }
 
-// Rotate rotates session id
+// Regenerate regenerates session id
 // use when change user access level to prevent session fixation
 //
-// can not use rotate and destroy same time
-// Rotate can call only one time
-func (s *Session) Rotate() {
+// can not use regenerate and destroy same time
+// Regenerate can call only one time
+func (s *Session) Regenerate() {
 	if len(s.oldID) > 0 {
 		return
 	}
@@ -135,10 +135,10 @@ func (s *Session) Rotate() {
 }
 
 // Renew clear all data in current session
-// and rotate session id
+// and regenerate session id
 func (s *Session) Renew() {
 	s.data = make(map[interface{}]interface{})
-	s.Rotate()
+	s.Regenerate()
 }
 
 // Destroy destroys session from store

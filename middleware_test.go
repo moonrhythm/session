@@ -266,7 +266,7 @@ func TestSameSiteFlag(t *testing.T) {
 	}
 }
 
-func TestRotate(t *testing.T) {
+func TestRegenerate(t *testing.T) {
 	c := 0
 
 	var (
@@ -283,7 +283,7 @@ func TestRotate(t *testing.T) {
 					setKey = key
 					return nil
 				}
-				assert.NotEqual(t, setKey, key, "expected key after rotate to renew")
+				assert.NotEqual(t, setKey, key, "expected key after regenerate to renew")
 				return nil
 			},
 			GetFunc: func(key string) (session.Data, error) {
@@ -302,12 +302,12 @@ func TestRotate(t *testing.T) {
 		} else if c == 1 {
 			s.Set("test", 2)
 
-			// test rotate multiple time should do nothing
+			// test regenerate multiple time should do nothing
 			oldID := s.ID()
-			s.Rotate()
+			s.Regenerate()
 			newID := s.ID()
 			assert.NotEqual(t, oldID, newID)
-			s.Rotate()
+			s.Regenerate()
 			assert.Equal(t, newID, s.ID())
 
 			s.Set("test", 3)
@@ -344,7 +344,7 @@ func TestRotate(t *testing.T) {
 	assert.Equal(t, "3", w.Body.String())
 }
 
-func TestRotateDeleteOldSession(t *testing.T) {
+func TestRegenerateDeleteOldSession(t *testing.T) {
 	c := 0
 	setValue := make(map[string]session.Data)
 
@@ -371,7 +371,7 @@ func TestRotateDeleteOldSession(t *testing.T) {
 			c = 1
 		} else if c == 1 {
 			s.Set("test", 2)
-			s.Rotate()
+			s.Regenerate()
 			s.Set("test", 3)
 			c = 2
 		}
@@ -588,7 +588,7 @@ func TestHijack(t *testing.T) {
 			s.Set("test", 1)
 			c = 1
 		} else if c == 1 {
-			s.Rotate()
+			s.Regenerate()
 			s.Set("test", 2)
 			c = 2
 		} else if c == 2 {
