@@ -8,15 +8,16 @@ import (
 	"github.com/acoshift/flash"
 )
 
-type SessionData map[interface{}]interface{}
+// Data stores session data
+type Data map[interface{}]interface{}
 
 // Session type
 type Session struct {
 	id      string // id is the hashed id if enable hash
 	rawID   string
-	oldID   string      // for rotate, is the hashed old id if enable hash
-	oldData SessionData // is the old encoded data before rotate
-	data    SessionData
+	oldID   string // for rotate, is the hashed old id if enable hash
+	oldData Data   // is the old encoded data before rotate
+	data    Data
 	destroy bool
 	changed bool
 	flash   *flash.Flash
@@ -34,13 +35,13 @@ type Session struct {
 }
 
 func init() {
-	gob.Register(SessionData{})
+	gob.Register(Data{})
 	gob.Register(flashKey{})
 }
 
 // Clone clones session data
-func (data SessionData) Clone() SessionData {
-	r := make(SessionData)
+func (data Data) Clone() Data {
+	r := make(Data)
 	for k, v := range data {
 		r[k] = v
 	}

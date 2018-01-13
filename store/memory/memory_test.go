@@ -13,7 +13,7 @@ import (
 func TestMemory(t *testing.T) {
 	s := store.New(store.Config{GCInterval: 10 * time.Millisecond})
 
-	data := make(session.SessionData)
+	data := make(session.Data)
 	data["test"] = "123"
 
 	err := s.Set("a", data, time.Millisecond)
@@ -48,7 +48,7 @@ func TestMemory(t *testing.T) {
 func TestMemoryWithoutTTL(t *testing.T) {
 	s := store.New(store.Config{GCInterval: 10 * time.Millisecond})
 
-	data := make(session.SessionData)
+	data := make(session.Data)
 	data["test"] = "123"
 
 	err := s.Set("a", data, 0)

@@ -29,7 +29,7 @@ type redisStore struct {
 	prefix string
 }
 
-func (s *redisStore) Get(key string) (session.SessionData, error) {
+func (s *redisStore) Get(key string) (session.Data, error) {
 	c := s.pool.Get()
 	data, err := redis.Bytes(c.Do("GET", s.prefix+key))
 	c.Close()
@@ -37,7 +37,7 @@ func (s *redisStore) Get(key string) (session.SessionData, error) {
 		return nil, err
 	}
 
-	var sessData session.SessionData
+	var sessData session.Data
 	err = gob.NewDecoder(bytes.NewReader(data)).Decode(&sessData)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (s *redisStore) Get(key string) (session.SessionData, error) {
 	return sessData, nil
 }
 
-func (s *redisStore) Set(key string, value session.SessionData, ttl time.Duration) error {
+func (s *redisStore) Set(key string, value session.Data, ttl time.Duration) error {
 	var buf bytes.Buffer
 	err := gob.NewEncoder(&buf).Encode(value)
 	if err != nil {

@@ -15,19 +15,19 @@ import (
 func TestManagerGetSave(t *testing.T) {
 	var (
 		setKey   string
-		setValue session.SessionData
+		setValue session.Data
 	)
 
 	m := session.New(session.Config{
 		MaxAge:       time.Second,
 		DisableRenew: true,
 		Store: &mockStore{
-			SetFunc: func(key string, value session.SessionData, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
 				setKey = key
 				setValue = value
 				return nil
 			},
-			GetFunc: func(key string) (session.SessionData, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				assert.Equal(t, setKey, key)
 				return setValue, nil
 			},

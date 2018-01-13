@@ -56,7 +56,7 @@ func (s *memoryStore) GC() {
 
 var errNotFound = errors.New("memory: session not found")
 
-func (s *memoryStore) Get(key string) (session.SessionData, error) {
+func (s *memoryStore) Get(key string) (session.Data, error) {
 	s.m.RLock()
 	defer s.m.RUnlock()
 	v := s.l[key]
@@ -66,7 +66,7 @@ func (s *memoryStore) Get(key string) (session.SessionData, error) {
 	if !v.exp.IsZero() && v.exp.Before(time.Now()) {
 		return nil, errNotFound
 	}
-	var sessData session.SessionData
+	var sessData session.Data
 	err := gob.NewDecoder(bytes.NewReader(v.data)).Decode(&sessData)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (s *memoryStore) Get(key string) (session.SessionData, error) {
 	return sessData, nil
 }
 
-func (s *memoryStore) Set(key string, value session.SessionData, ttl time.Duration) error {
+func (s *memoryStore) Set(key string, value session.Data, ttl time.Duration) error {
 	var buf bytes.Buffer
 	err := gob.NewEncoder(&buf).Encode(value)
 	if err != nil {

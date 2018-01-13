@@ -18,7 +18,7 @@ func TestRedis(t *testing.T) {
 		},
 	}})
 
-	data := make(session.SessionData)
+	data := make(session.Data)
 	data["test"] = "123"
 
 	err := s.Set("a", data, time.Second)
@@ -57,7 +57,7 @@ func TestRedisWithoutMaxAge(t *testing.T) {
 		},
 	}})
 
-	data := make(session.SessionData)
+	data := make(session.Data)
 	data["test"] = "123"
 
 	err := s.Set("a", data, 0)
