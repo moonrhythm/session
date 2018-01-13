@@ -50,3 +50,10 @@ func (s *redisStore) Del(key string) error {
 	_, err := c.Do("DEL", s.prefix+key)
 	return err
 }
+
+func (s *redisStore) Touch(key string, ttl time.Duration) error {
+	c := s.pool.Get()
+	defer c.Close()
+	_, err := c.Do("EXPIRE", s.prefix+key, int64(ttl/time.Second))
+	return err
+}
