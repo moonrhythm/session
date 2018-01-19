@@ -1,33 +1,27 @@
-package session
+package session_test
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/acoshift/session"
 )
 
-func TestSessionOperation(t *testing.T) {
-	s := Session{}
-	assert.Nil(t, s.Get("a"), "expected get data from empty session return nil")
-	assert.Nil(t, s.Pop("a"), "expected pop data from empty session return nil")
+func TestSessionRenew(t *testing.T) {
+	h := session.Middleware(session.Config{
+		Store: &mockStore{},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context(), sessName)
+		s.Set("a", 1)
+		s.Renew()
+		assert.True(t, s.Changed())
+		assert.Empty(t, s.GetInt("test"))
+	}))
 
-	s.Del("a")
-	assert.Nil(t, s.data)
-
-	s.Set("a", 1)
-	assert.Equal(t, 1, s.Get("a"))
-
-	s.Del("a")
-	assert.Nil(t, s.Get("a"), "expected get data after delete to be nil")
-
-	s.Set("b", 1)
-	assert.Equal(t, 1, s.Pop("b"))
-	assert.Nil(t, s.Get("b"))
-}
-
-func TestRenew(t *testing.T) {
-	s := Session{}
-	s.Set("a", "1")
-	s.Renew()
-	assert.Nil(t, s.Get("a"), "expected renew must delete all data")
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
 }

@@ -32,7 +32,7 @@ type Session struct {
 	SameSite SameSite
 	Rolling  bool
 
-	IDHashFunc func(id string) string
+	manager *Manager
 }
 
 // Clone clones session data
@@ -193,13 +193,9 @@ func (s *Session) Regenerate() {
 
 	s.oldID = s.id
 	s.oldData = s.data.Clone()
-	s.rawID = generateID()
+	s.rawID = s.manager.config.GenerateID()
 	s.isNew = true
-	if s.IDHashFunc != nil {
-		s.id = s.IDHashFunc(s.rawID)
-	} else {
-		s.id = s.rawID
-	}
+	s.id = s.manager.hashID(s.rawID)
 	s.changed = true
 }
 

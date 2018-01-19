@@ -1,8 +1,10 @@
 package session
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -29,6 +31,18 @@ func New(config Config) *Manager {
 	m := Manager{}
 	m.config = config
 
+	if m.config.GenerateID == nil {
+		m.config.GenerateID = func() string {
+			b := make([]byte, 32)
+			if _, err := io.ReadFull(rand.Reader, b); err != nil {
+				// this should never happened
+				// or something wrong with OS's crypto pseudorandom generator
+				panic(err)
+			}
+			return base64.RawURLEncoding.EncodeToString(b)
+		}
+	}
+
 	m.hashID = func(id string) string {
 		h := sha256.New()
 		h.Write([]byte(id))
@@ -48,15 +62,15 @@ func New(config Config) *Manager {
 // Get retrieves session from request
 func (m *Manager) Get(r *http.Request, name string) *Session {
 	s := Session{
-		Name:       name,
-		Domain:     m.config.Domain,
-		Path:       m.config.Path,
-		HTTPOnly:   m.config.HTTPOnly,
-		MaxAge:     m.config.MaxAge,
-		Secure:     (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r, m.config.TrustProxy)),
-		SameSite:   m.config.SameSite,
-		Rolling:    m.config.Rolling,
-		IDHashFunc: m.hashID,
+		manager:  m,
+		Name:     name,
+		Domain:   m.config.Domain,
+		Path:     m.config.Path,
+		HTTPOnly: m.config.HTTPOnly,
+		MaxAge:   m.config.MaxAge,
+		Secure:   (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r, m.config.TrustProxy)),
+		SameSite: m.config.SameSite,
+		Rolling:  m.config.Rolling,
 	}
 
 	// get session key from cookie
@@ -75,7 +89,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 	}
 
 	if len(s.id) == 0 {
-		s.rawID = generateID()
+		s.rawID = m.config.GenerateID()
 		s.id = m.hashID(s.rawID)
 		s.isNew = true
 	}
@@ -126,4 +140,14 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	s.Set(timestampKey, time.Now().Unix())
 	err := m.config.Store.Set(s.id, s.data, opt)
 	return err
+}
+
+func isTLS(r *http.Request, trustProxy bool) bool {
+	if r.TLS != nil {
+		return true
+	}
+	if trustProxy && r.Header.Get("X-Forwarded-Proto") == "https" {
+		return true
+	}
+	return false
 }
