@@ -77,6 +77,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 	if len(s.id) == 0 {
 		s.rawID = generateID()
 		s.id = m.hashID(s.rawID)
+		s.isNew = true
 	}
 
 	return &s

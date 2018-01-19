@@ -438,6 +438,37 @@ func TestRolling(t *testing.T) {
 	assert.Equal(t, oldCookie, w.Result().Cookies()[0].Value)
 }
 
+func TestRollingDisable(t *testing.T) {
+	c := 0
+
+	h := session.Middleware(session.Config{
+		MaxAge:  time.Second,
+		Rolling: false,
+		Store:   memory.New(memory.Config{}),
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context(), sessName)
+		if c == 0 {
+			s.Set("test", 1)
+			c = 1
+		} else {
+			assert.Equal(t, 1, s.Get("test"))
+			s.Set("test2", 1)
+		}
+		w.Write([]byte("ok"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	time.Sleep(time.Millisecond * 600)
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", w.Result().Cookies()[0].String())
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	assert.Len(t, w.Result().Cookies(), 0)
+}
+
 func TestDestroy(t *testing.T) {
 	c := 0
 

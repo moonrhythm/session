@@ -19,6 +19,7 @@ type Session struct {
 	data    Data
 	destroy bool
 	changed bool
+	isNew   bool
 	flash   *flash.Flash
 
 	// cookie config
@@ -121,6 +122,7 @@ func (s *Session) Regenerate() {
 	s.oldID = s.id
 	s.oldData = s.data.Clone()
 	s.rawID = generateID()
+	s.isNew = true
 	if s.IDHashFunc != nil {
 		s.id = s.IDHashFunc(s.rawID)
 	} else {
@@ -161,8 +163,7 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
-	// if not rolling and session not modified, don't set cookie
-	if !s.Rolling && !s.Changed() {
+	if !s.Rolling && (!s.isNew || !s.Changed()) {
 		return
 	}
 
