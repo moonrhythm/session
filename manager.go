@@ -55,6 +55,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		MaxAge:     m.config.MaxAge,
 		Secure:     (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r)),
 		SameSite:   m.config.SameSite,
+		Rolling:    m.config.Rolling,
 		IDHashFunc: m.hashID,
 	}
 

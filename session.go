@@ -29,6 +29,7 @@ type Session struct {
 	MaxAge   time.Duration
 	Secure   bool
 	SameSite SameSite
+	Rolling  bool
 
 	IDHashFunc func(id string) string
 }
@@ -160,8 +161,8 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
-	// if session not modified, don't set cookie
-	if !s.Changed() {
+	// if not rolling and session not modified, don't set cookie
+	if !s.Rolling && !s.Changed() {
 		return
 	}
 

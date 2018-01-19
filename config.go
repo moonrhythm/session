@@ -21,6 +21,9 @@ type Config struct {
 	// better not to delete old session to avoid user loss session when unstable network
 	DeleteOldSession bool
 
+	// Rolling, set cookie every responses
+	Rolling bool
+
 	// Disable features
 	DisableRenew  bool // disable auto renew session
 	DisableHashID bool // disable hash session id when save to store
