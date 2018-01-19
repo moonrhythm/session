@@ -85,12 +85,6 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 //
 // Save must be called before response header was written
 func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
-	// check is session should renew
-	if m.shouldRenewSession(s) {
-		// use regenerate to renew session
-		s.Regenerate()
-	}
-
 	s.setCookie(w)
 
 	if s.destroy {
@@ -106,7 +100,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 	// if session not modified, don't save to store to prevent store overflow
 	if !s.Changed() {
-		return nil
+		return m.config.Store.Touch(s.id, s.MaxAge)
 	}
 
 	// check is regenerate
@@ -128,19 +122,4 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	s.Set(timestampKey, time.Now().Unix())
 	err := m.config.Store.Set(s.id, s.data, s.MaxAge)
 	return err
-}
-
-func (m *Manager) shouldRenewSession(s *Session) bool {
-	if m.config.DisableRenew {
-		return false
-	}
-	sec, _ := s.Get(timestampKey).(int64)
-	if sec <= 0 {
-		return false
-	}
-	t := time.Unix(sec, 0)
-	if time.Now().Sub(t) < s.MaxAge/2 {
-		return false
-	}
-	return true
 }
