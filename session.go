@@ -90,6 +90,18 @@ func (s *Session) GetInt64(key string) int64 {
 	return r
 }
 
+// GetFloat32 gets float32 from session
+func (s *Session) GetFloat32(key string) float32 {
+	r, _ := s.Get(key).(float32)
+	return r
+}
+
+// GetFloat64 gets float64 from session
+func (s *Session) GetFloat64(key string) float64 {
+	r, _ := s.Get(key).(float64)
+	return r
+}
+
 // GetBool gets bool from session
 func (s *Session) GetBool(key string) bool {
 	r, _ := s.Get(key).(bool)
@@ -142,6 +154,18 @@ func (s *Session) PopInt(key string) int {
 // PopInt64 gets int64 from session
 func (s *Session) PopInt64(key string) int64 {
 	r, _ := s.Get(key).(int64)
+	return r
+}
+
+// PopFloat32 gets int from session
+func (s *Session) PopFloat32(key string) float32 {
+	r, _ := s.Get(key).(float32)
+	return r
+}
+
+// PopFloat64 gets int64 from session
+func (s *Session) PopFloat64(key string) float64 {
+	r, _ := s.Get(key).(float64)
 	return r
 }
 
