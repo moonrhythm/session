@@ -15,7 +15,7 @@ type Session struct {
 	id      string // id is the hashed id if enable hash
 	rawID   string
 	oldID   string // for regenerate, is the hashed old id if enable hash
-	oldData Data   // is the old encoded data before regenerate
+	oldData Data   // is the old data before regenerate
 	data    Data
 	destroy bool
 	changed bool
