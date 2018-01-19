@@ -1,7 +1,6 @@
 package session
 
 import (
-	"encoding/gob"
 	"net/http"
 	"time"
 
@@ -9,7 +8,7 @@ import (
 )
 
 // Data stores session data
-type Data map[interface{}]interface{}
+type Data map[string]interface{}
 
 // Session type
 type Session struct {
@@ -34,11 +33,6 @@ type Session struct {
 	IDHashFunc func(id string) string
 }
 
-func init() {
-	gob.Register(Data{})
-	gob.Register(flashKey{})
-}
-
 // Clone clones session data
 func (data Data) Clone() Data {
 	r := make(Data)
@@ -49,8 +43,8 @@ func (data Data) Clone() Data {
 }
 
 // session internal data
-type (
-	flashKey struct{}
+const (
+	flashKey = "session/flash"
 )
 
 // ID returns session id or hashed session id if enable hash id
@@ -71,7 +65,7 @@ func (s *Session) Changed() bool {
 }
 
 // Get gets data from session
-func (s *Session) Get(key interface{}) interface{} {
+func (s *Session) Get(key string) interface{} {
 	if s.data == nil {
 		return nil
 	}
@@ -79,16 +73,16 @@ func (s *Session) Get(key interface{}) interface{} {
 }
 
 // Set sets data to session
-func (s *Session) Set(key, value interface{}) {
+func (s *Session) Set(key string, value interface{}) {
 	if s.data == nil {
-		s.data = make(map[interface{}]interface{})
+		s.data = make(Data)
 	}
 	s.changed = true
 	s.data[key] = value
 }
 
 // Del deletes data from session
-func (s *Session) Del(key interface{}) {
+func (s *Session) Del(key string) {
 	if s.data == nil {
 		return
 	}
@@ -99,7 +93,7 @@ func (s *Session) Del(key interface{}) {
 }
 
 // Pop gets data from session then delete it
-func (s *Session) Pop(key interface{}) interface{} {
+func (s *Session) Pop(key string) interface{} {
 	if s.data == nil {
 		return nil
 	}
@@ -137,7 +131,7 @@ func (s *Session) Regenerate() {
 // Renew clear all data in current session
 // and regenerate session id
 func (s *Session) Renew() {
-	s.data = make(map[interface{}]interface{})
+	s.data = make(Data)
 	s.Regenerate()
 }
 
@@ -191,7 +185,7 @@ func (s *Session) Flash() *flash.Flash {
 	if s.flash != nil {
 		return s.flash
 	}
-	if b, ok := s.Get(flashKey{}).([]byte); ok {
+	if b, ok := s.Get(flashKey).([]byte); ok {
 		s.flash, _ = flash.Decode(b)
 	}
 	if s.flash == nil {
@@ -203,7 +197,7 @@ func (s *Session) Flash() *flash.Flash {
 // Hijacked checks is session was hijacked,
 // can use only with Manager
 func (s *Session) Hijacked() bool {
-	if t, ok := s.Get(destroyedKey{}).(int64); ok {
+	if t, ok := s.Get(destroyedKey).(int64); ok {
 		if t < time.Now().UnixNano()-int64(HijackedTime) {
 			return true
 		}
