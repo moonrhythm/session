@@ -65,11 +65,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		hashedID := m.hashID(cookie.Value)
 
 		// get session data from store
-		// TODO: reuse store option function
-		s.data, err = m.config.Store.Get(hashedID, StoreOption{
-			Rolling: s.Rolling,
-			TTL:     s.MaxAge,
-		})
+		s.data, err = m.config.Store.Get(hashedID, makeStoreOption(m, &s))
 		if err == nil {
 			s.rawID = cookie.Value
 			s.id = hashedID
@@ -93,11 +89,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	s.setCookie(w)
 
-	// TODO: move to function for reuse
-	opt := StoreOption{
-		Rolling: s.Rolling,
-		TTL:     s.MaxAge,
-	}
+	opt := makeStoreOption(m, s)
 
 	if s.destroy {
 		m.config.Store.Del(s.id, opt)

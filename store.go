@@ -16,3 +16,10 @@ type StoreOption struct {
 	Rolling bool
 	TTL     time.Duration
 }
+
+func makeStoreOption(m *Manager, s *Session) StoreOption {
+	return StoreOption{
+		Rolling: s.Rolling,
+		TTL:     s.MaxAge,
+	}
+}
