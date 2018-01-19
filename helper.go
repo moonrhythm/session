@@ -7,11 +7,11 @@ import (
 	"net/http"
 )
 
-func isTLS(r *http.Request) bool {
+func isTLS(r *http.Request, trustProxy bool) bool {
 	if r.TLS != nil {
 		return true
 	}
-	if r.Header.Get("X-Forwarded-Proto") == "https" {
+	if trustProxy && r.Header.Get("X-Forwarded-Proto") == "https" {
 		return true
 	}
 	return false

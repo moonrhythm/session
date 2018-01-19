@@ -196,8 +196,9 @@ func TestSecureFlag(t *testing.T) {
 
 	for _, c := range cases {
 		h := session.Middleware(session.Config{
-			Store:  &mockStore{},
-			Secure: c.flag,
+			Store:      &mockStore{},
+			Secure:     c.flag,
+			TrustProxy: true,
 		})(mockHandler)
 
 		w := httptest.NewRecorder()
