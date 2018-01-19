@@ -67,6 +67,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		// get session data from store
 		s.data, err = m.config.Store.Get(hashedID)
 		if err == nil {
+			s.rawID = cookie.Value
 			s.id = hashedID
 		}
 		// DO NOT set session id to cookie value if not found in store

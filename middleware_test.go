@@ -406,12 +406,13 @@ func TestRegenerateDeleteOldSession(t *testing.T) {
 	assert.Equal(t, "3", w.Body.String())
 }
 
-func TestRenew(t *testing.T) {
+func TestRolling(t *testing.T) {
 	c := 0
 
 	h := session.Middleware(session.Config{
-		MaxAge: time.Second,
-		Store:  memory.New(memory.Config{}),
+		MaxAge:  time.Second,
+		Rolling: true,
+		Store:   memory.New(memory.Config{}),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s := session.Get(r.Context(), sessName)
 		if c == 0 {
@@ -434,7 +435,7 @@ func TestRenew(t *testing.T) {
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 	assert.Len(t, w.Result().Cookies(), 1)
-	assert.NotEqual(t, oldCookie, w.Result().Cookies()[0].Value)
+	assert.Equal(t, oldCookie, w.Result().Cookies()[0].Value)
 }
 
 func TestDestroy(t *testing.T) {
