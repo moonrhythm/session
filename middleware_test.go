@@ -214,6 +214,34 @@ func TestSecureFlag(t *testing.T) {
 	}
 }
 
+func TestSecureFlagWithoutTrustProxy(t *testing.T) {
+	cases := []struct {
+		flag     session.Secure
+		expected bool
+	}{
+		{session.NoSecure, false},
+		{session.ForceSecure, true},
+		{session.PreferSecure, false},
+	}
+
+	for _, c := range cases {
+		h := session.Middleware(session.Config{
+			Store:      &mockStore{},
+			Secure:     c.flag,
+			TrustProxy: false,
+		})(mockHandler)
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		r.Header.Set("X-Forwarded-Proto", "https")
+		h.ServeHTTP(w, r)
+
+		cs := w.Result().Cookies()
+		assert.Len(t, cs, 1)
+		assert.Equal(t, c.expected, cs[0].Secure)
+	}
+}
+
 func TestHttpOnlyFlag(t *testing.T) {
 	cases := []struct {
 		flag bool
