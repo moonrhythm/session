@@ -193,7 +193,7 @@ func (s *Session) Regenerate() {
 
 	s.oldID = s.id
 	s.oldData = s.data.Clone()
-	s.rawID = generateID()
+	s.rawID = s.manager.config.GenerateID()
 	s.isNew = true
 	s.id = s.manager.hashID(s.rawID)
 	s.changed = true

@@ -30,6 +30,9 @@ type Config struct {
 	// Disable features
 	DisableRenew  bool // disable auto renew session
 	DisableHashID bool // disable hash session id when save to store
+
+	// GenerateID is the generate id function
+	GenerateID func() string
 }
 
 // Secure config
