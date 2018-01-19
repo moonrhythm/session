@@ -48,15 +48,15 @@ func TestDefaultConfig(t *testing.T) {
 func TestEmptySession(t *testing.T) {
 	h := session.Middleware(session.Config{
 		Store: &mockStore{
-			GetFunc: func(key string) (session.Data, error) {
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
 				assert.Fail(t, "expected get was not called")
 				return nil, nil
 			},
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				assert.Fail(t, "expected set was not called")
 				return nil
 			},
-			DelFunc: func(key string) error {
+			DelFunc: func(key string, opt session.StoreOption) error {
 				assert.Fail(t, "expected del was not called")
 				return nil
 			},
@@ -75,15 +75,15 @@ func TestEmptySession(t *testing.T) {
 func TestEmptySessionFlash(t *testing.T) {
 	h := session.Middleware(session.Config{
 		Store: &mockStore{
-			GetFunc: func(key string) (session.Data, error) {
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
 				assert.Fail(t, "expected get was not called")
 				return nil, nil
 			},
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				assert.Fail(t, "expected set was not called")
 				return nil
 			},
-			DelFunc: func(key string) error {
+			DelFunc: func(key string, opt session.StoreOption) error {
 				assert.Fail(t, "expected del was not called")
 				return nil
 			},
@@ -113,11 +113,11 @@ func TestSessionSetInStore(t *testing.T) {
 	h := session.Middleware(session.Config{
 		MaxAge: time.Second,
 		Store: &mockStore{
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setCalled = true
 				setKey = key
 				setValue = value
-				setTTL = ttl
+				setTTL = opt.TTL
 				return nil
 			},
 		},
@@ -147,13 +147,13 @@ func TestSessionGetSet(t *testing.T) {
 		MaxAge:       time.Second,
 		DisableRenew: true,
 		Store: &mockStore{
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setCalled++
 				setKey = key
 				setValue = value
 				return nil
 			},
-			GetFunc: func(key string) (session.Data, error) {
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
 				assert.Equal(t, setKey, key)
 				return setValue, nil
 			},
@@ -277,7 +277,7 @@ func TestRegenerate(t *testing.T) {
 	h := session.Middleware(session.Config{
 		DisableRenew: true,
 		Store: &mockStore{
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setValue[key] = value
 				if c == 0 {
 					setKey = key
@@ -286,10 +286,10 @@ func TestRegenerate(t *testing.T) {
 				assert.NotEqual(t, setKey, key, "expected key after regenerate to renew")
 				return nil
 			},
-			GetFunc: func(key string) (session.Data, error) {
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
 				return setValue[key], nil
 			},
-			DelFunc: func(key string) error {
+			DelFunc: func(key string, opt session.StoreOption) error {
 				setValue[key] = nil
 				return nil
 			},
@@ -352,14 +352,14 @@ func TestRegenerateDeleteOldSession(t *testing.T) {
 		DisableRenew:     true,
 		DeleteOldSession: true,
 		Store: &mockStore{
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setValue[key] = value
 				return nil
 			},
-			GetFunc: func(key string) (session.Data, error) {
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
 				return setValue[key], nil
 			},
-			DelFunc: func(key string) error {
+			DelFunc: func(key string, opt session.StoreOption) error {
 				setValue[key] = nil
 				return nil
 			},
@@ -406,12 +406,13 @@ func TestRegenerateDeleteOldSession(t *testing.T) {
 	assert.Equal(t, "3", w.Body.String())
 }
 
-func TestRenew(t *testing.T) {
+func TestRolling(t *testing.T) {
 	c := 0
 
 	h := session.Middleware(session.Config{
-		MaxAge: time.Second,
-		Store:  memory.New(memory.Config{}),
+		MaxAge:  time.Second,
+		Rolling: true,
+		Store:   memory.New(memory.Config{}),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s := session.Get(r.Context(), sessName)
 		if c == 0 {
@@ -434,7 +435,38 @@ func TestRenew(t *testing.T) {
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 	assert.Len(t, w.Result().Cookies(), 1)
-	assert.NotEqual(t, oldCookie, w.Result().Cookies()[0].Value)
+	assert.Equal(t, oldCookie, w.Result().Cookies()[0].Value)
+}
+
+func TestRollingDisable(t *testing.T) {
+	c := 0
+
+	h := session.Middleware(session.Config{
+		MaxAge:  time.Second,
+		Rolling: false,
+		Store:   memory.New(memory.Config{}),
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context(), sessName)
+		if c == 0 {
+			s.Set("test", 1)
+			c = 1
+		} else {
+			assert.Equal(t, 1, s.Get("test"))
+			s.Set("test2", 1)
+		}
+		w.Write([]byte("ok"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	time.Sleep(time.Millisecond * 600)
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", w.Result().Cookies()[0].String())
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	assert.Len(t, w.Result().Cookies(), 0)
 }
 
 func TestDestroy(t *testing.T) {
@@ -448,15 +480,15 @@ func TestDestroy(t *testing.T) {
 
 	h := session.Middleware(session.Config{
 		Store: &mockStore{
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setKey = key
 				setValue = value
 				return nil
 			},
-			GetFunc: func(key string) (session.Data, error) {
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
 				return setValue, nil
 			},
-			DelFunc: func(key string) error {
+			DelFunc: func(key string, opt session.StoreOption) error {
 				delCalled = true
 				assert.Equal(t, setKey, key, "expected destroy old key")
 				return nil
@@ -490,7 +522,7 @@ func TestDisableHashID(t *testing.T) {
 	h := session.Middleware(session.Config{
 		DisableHashID: true,
 		Store: &mockStore{
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setKey = key
 				return nil
 			},
@@ -570,14 +602,14 @@ func TestHijack(t *testing.T) {
 	h := session.Middleware(session.Config{
 		DisableRenew: true,
 		Store: &mockStore{
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setValue[key] = value
 				return nil
 			},
-			GetFunc: func(key string) (session.Data, error) {
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
 				return setValue[key], nil
 			},
-			DelFunc: func(key string) error {
+			DelFunc: func(key string, opt session.StoreOption) error {
 				setValue[key] = nil
 				return nil
 			},

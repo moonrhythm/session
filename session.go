@@ -15,10 +15,11 @@ type Session struct {
 	id      string // id is the hashed id if enable hash
 	rawID   string
 	oldID   string // for regenerate, is the hashed old id if enable hash
-	oldData Data   // is the old encoded data before regenerate
+	oldData Data   // is the old data before regenerate
 	data    Data
 	destroy bool
 	changed bool
+	isNew   bool
 	flash   *flash.Flash
 
 	// cookie config
@@ -29,6 +30,7 @@ type Session struct {
 	MaxAge   time.Duration
 	Secure   bool
 	SameSite SameSite
+	Rolling  bool
 
 	IDHashFunc func(id string) string
 }
@@ -44,7 +46,7 @@ func (data Data) Clone() Data {
 
 // session internal data
 const (
-	flashKey = "session/flash"
+	flashKey = "_session/flash"
 )
 
 // ID returns session id or hashed session id if enable hash id
@@ -192,6 +194,7 @@ func (s *Session) Regenerate() {
 	s.oldID = s.id
 	s.oldData = s.data.Clone()
 	s.rawID = generateID()
+	s.isNew = true
 	if s.IDHashFunc != nil {
 		s.id = s.IDHashFunc(s.rawID)
 	} else {
@@ -232,8 +235,7 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
-	// if session not modified, don't set cookie
-	if !s.Changed() {
+	if !s.Rolling && (!s.isNew || !s.Changed()) {
 		return
 	}
 

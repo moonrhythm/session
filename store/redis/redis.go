@@ -29,9 +29,12 @@ type redisStore struct {
 	prefix string
 }
 
-func (s *redisStore) Get(key string) (session.Data, error) {
+func (s *redisStore) Get(key string, opt session.StoreOption) (session.Data, error) {
 	c := s.pool.Get()
 	data, err := redis.Bytes(c.Do("GET", s.prefix+key))
+	if opt.Rolling && opt.TTL > 0 {
+		c.Do("EXPIRE", s.prefix+key, int64(opt.TTL/time.Second))
+	}
 	c.Close()
 	if err != nil {
 		return nil, err
@@ -45,7 +48,7 @@ func (s *redisStore) Get(key string) (session.Data, error) {
 	return sessData, nil
 }
 
-func (s *redisStore) Set(key string, value session.Data, ttl time.Duration) error {
+func (s *redisStore) Set(key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
 	err := gob.NewEncoder(&buf).Encode(value)
 	if err != nil {
@@ -53,8 +56,8 @@ func (s *redisStore) Set(key string, value session.Data, ttl time.Duration) erro
 	}
 
 	c := s.pool.Get()
-	if ttl > 0 {
-		_, err = c.Do("SETEX", s.prefix+key, int64(ttl/time.Second), buf.Bytes())
+	if opt.TTL > 0 {
+		_, err = c.Do("SETEX", s.prefix+key, int64(opt.TTL/time.Second), buf.Bytes())
 	} else {
 		_, err = c.Do("SET", s.prefix+key, buf.Bytes())
 	}
@@ -62,19 +65,9 @@ func (s *redisStore) Set(key string, value session.Data, ttl time.Duration) erro
 	return err
 }
 
-func (s *redisStore) Del(key string) error {
+func (s *redisStore) Del(key string, opt session.StoreOption) error {
 	c := s.pool.Get()
 	_, err := c.Do("DEL", s.prefix+key)
-	c.Close()
-	return err
-}
-
-func (s *redisStore) Touch(key string, ttl time.Duration) error {
-	if ttl <= 0 {
-		return nil
-	}
-	c := s.pool.Get()
-	_, err := c.Do("EXPIRE", s.prefix+key, int64(ttl/time.Second))
 	c.Close()
 	return err
 }

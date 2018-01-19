@@ -16,8 +16,8 @@ type Manager struct {
 
 // manager internal data
 const (
-	timestampKey = "session/timestamp"
-	destroyedKey = "session/destroyed" // for detect session hijack
+	timestampKey = "_session/timestamp"
+	destroyedKey = "_session/destroyed" // for detect session hijack
 )
 
 // New creates new session manager
@@ -55,6 +55,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		MaxAge:     m.config.MaxAge,
 		Secure:     (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r)),
 		SameSite:   m.config.SameSite,
+		Rolling:    m.config.Rolling,
 		IDHashFunc: m.hashID,
 	}
 
@@ -64,8 +65,9 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		hashedID := m.hashID(cookie.Value)
 
 		// get session data from store
-		s.data, err = m.config.Store.Get(hashedID)
+		s.data, err = m.config.Store.Get(hashedID, makeStoreOption(m, &s))
 		if err == nil {
+			s.rawID = cookie.Value
 			s.id = hashedID
 		}
 		// DO NOT set session id to cookie value if not found in store
@@ -75,6 +77,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 	if len(s.id) == 0 {
 		s.rawID = generateID()
 		s.id = m.hashID(s.rawID)
+		s.isNew = true
 	}
 
 	return &s
@@ -84,16 +87,12 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 //
 // Save must be called before response header was written
 func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
-	// check is session should renew
-	if m.shouldRenewSession(s) {
-		// use regenerate to renew session
-		s.Regenerate()
-	}
-
 	s.setCookie(w)
 
+	opt := makeStoreOption(m, s)
+
 	if s.destroy {
-		m.config.Store.Del(s.id)
+		m.config.Store.Del(s.id, opt)
 		return nil
 	}
 
@@ -111,12 +110,12 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	// check is regenerate
 	if len(s.oldID) > 0 {
 		if m.config.DeleteOldSession {
-			m.config.Store.Del(s.oldID)
+			m.config.Store.Del(s.oldID, opt)
 		} else {
 			// save old session data if not delete
 			s.oldData[timestampKey] = int64(0)
 			s.oldData[destroyedKey] = time.Now().UnixNano()
-			err := m.config.Store.Set(s.oldID, s.oldData, s.MaxAge)
+			err := m.config.Store.Set(s.oldID, s.oldData, opt)
 			if err != nil {
 				return err
 			}
@@ -125,21 +124,6 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 	// save sesion data to store
 	s.Set(timestampKey, time.Now().Unix())
-	err := m.config.Store.Set(s.id, s.data, s.MaxAge)
+	err := m.config.Store.Set(s.id, s.data, opt)
 	return err
-}
-
-func (m *Manager) shouldRenewSession(s *Session) bool {
-	if m.config.DisableRenew {
-		return false
-	}
-	sec, _ := s.Get(timestampKey).(int64)
-	if sec <= 0 {
-		return false
-	}
-	t := time.Unix(sec, 0)
-	if time.Now().Sub(t) < s.MaxAge/2 {
-		return false
-	}
-	return true
 }

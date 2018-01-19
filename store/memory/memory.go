@@ -56,7 +56,7 @@ func (s *memoryStore) GC() {
 
 var errNotFound = errors.New("memory: session not found")
 
-func (s *memoryStore) Get(key string) (session.Data, error) {
+func (s *memoryStore) Get(key string, opt session.StoreOption) (session.Data, error) {
 	s.m.RLock()
 	defer s.m.RUnlock()
 	v := s.l[key]
@@ -71,10 +71,13 @@ func (s *memoryStore) Get(key string) (session.Data, error) {
 	if err != nil {
 		return nil, err
 	}
+	if opt.Rolling && opt.TTL > 0 {
+		v.exp = time.Now().Add(opt.TTL)
+	}
 	return sessData, nil
 }
 
-func (s *memoryStore) Set(key string, value session.Data, ttl time.Duration) error {
+func (s *memoryStore) Set(key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
 	err := gob.NewEncoder(&buf).Encode(value)
 	if err != nil {
@@ -83,29 +86,17 @@ func (s *memoryStore) Set(key string, value session.Data, ttl time.Duration) err
 
 	s.m.Lock()
 	it := &item{data: buf.Bytes()}
-	if ttl > 0 {
-		it.exp = time.Now().Add(ttl)
+	if opt.TTL > 0 {
+		it.exp = time.Now().Add(opt.TTL)
 	}
 	s.l[key] = it
 	s.m.Unlock()
 	return nil
 }
 
-func (s *memoryStore) Del(key string) error {
+func (s *memoryStore) Del(key string, opt session.StoreOption) error {
 	s.m.Lock()
 	delete(s.l, key)
-	s.m.Unlock()
-	return nil
-}
-
-func (s *memoryStore) Touch(key string, ttl time.Duration) error {
-	if ttl <= 0 {
-		return nil
-	}
-	s.m.Lock()
-	if it, ok := s.l[key]; ok {
-		it.exp = time.Now().Add(ttl)
-	}
 	s.m.Unlock()
 	return nil
 }
