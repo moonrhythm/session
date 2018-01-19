@@ -48,15 +48,15 @@ func New(config Config) *Manager {
 // Get retrieves session from request
 func (m *Manager) Get(r *http.Request, name string) *Session {
 	s := Session{
-		Name:       name,
-		Domain:     m.config.Domain,
-		Path:       m.config.Path,
-		HTTPOnly:   m.config.HTTPOnly,
-		MaxAge:     m.config.MaxAge,
-		Secure:     (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r, m.config.TrustProxy)),
-		SameSite:   m.config.SameSite,
-		Rolling:    m.config.Rolling,
-		IDHashFunc: m.hashID,
+		manager:  m,
+		Name:     name,
+		Domain:   m.config.Domain,
+		Path:     m.config.Path,
+		HTTPOnly: m.config.HTTPOnly,
+		MaxAge:   m.config.MaxAge,
+		Secure:   (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r, m.config.TrustProxy)),
+		SameSite: m.config.SameSite,
+		Rolling:  m.config.Rolling,
 	}
 
 	// get session key from cookie
