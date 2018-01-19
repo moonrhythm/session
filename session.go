@@ -72,6 +72,42 @@ func (s *Session) Get(key string) interface{} {
 	return s.data[key]
 }
 
+// GetString gets string from session
+func (s *Session) GetString(key string) string {
+	r, _ := s.Get(key).(string)
+	return r
+}
+
+// GetInt gets int from session
+func (s *Session) GetInt(key string) int {
+	r, _ := s.Get(key).(int)
+	return r
+}
+
+// GetInt64 gets int64 from session
+func (s *Session) GetInt64(key string) int64 {
+	r, _ := s.Get(key).(int64)
+	return r
+}
+
+// GetFloat32 gets float32 from session
+func (s *Session) GetFloat32(key string) float32 {
+	r, _ := s.Get(key).(float32)
+	return r
+}
+
+// GetFloat64 gets float64 from session
+func (s *Session) GetFloat64(key string) float64 {
+	r, _ := s.Get(key).(float64)
+	return r
+}
+
+// GetBool gets bool from session
+func (s *Session) GetBool(key string) bool {
+	r, _ := s.Get(key).(bool)
+	return r
+}
+
 // Set sets data to session
 func (s *Session) Set(key string, value interface{}) {
 	if s.data == nil {
@@ -100,6 +136,42 @@ func (s *Session) Pop(key string) interface{} {
 	r := s.data[key]
 	s.changed = true
 	delete(s.data, key)
+	return r
+}
+
+// PopString pops string from session
+func (s *Session) PopString(key string) string {
+	r, _ := s.Get(key).(string)
+	return r
+}
+
+// PopInt pops int from session
+func (s *Session) PopInt(key string) int {
+	r, _ := s.Get(key).(int)
+	return r
+}
+
+// PopInt64 pops int64 from session
+func (s *Session) PopInt64(key string) int64 {
+	r, _ := s.Get(key).(int64)
+	return r
+}
+
+// PopFloat32 pops float32 from session
+func (s *Session) PopFloat32(key string) float32 {
+	r, _ := s.Get(key).(float32)
+	return r
+}
+
+// PopFloat64 pops float64 from session
+func (s *Session) PopFloat64(key string) float64 {
+	r, _ := s.Get(key).(float64)
+	return r
+}
+
+// PopBool pops bool from session
+func (s *Session) PopBool(key string) bool {
+	r, _ := s.Get(key).(bool)
 	return r
 }
 
