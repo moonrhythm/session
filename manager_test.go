@@ -22,12 +22,12 @@ func TestManagerGetSave(t *testing.T) {
 		MaxAge:       time.Second,
 		DisableRenew: true,
 		Store: &mockStore{
-			SetFunc: func(key string, value session.Data, ttl time.Duration) error {
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setKey = key
 				setValue = value
 				return nil
 			},
-			GetFunc: func(key string) (session.Data, error) {
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
 				assert.Equal(t, setKey, key)
 				return setValue, nil
 			},

@@ -65,7 +65,11 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		hashedID := m.hashID(cookie.Value)
 
 		// get session data from store
-		s.data, err = m.config.Store.Get(hashedID)
+		// TODO: reuse store option function
+		s.data, err = m.config.Store.Get(hashedID, StoreOption{
+			Rolling: s.Rolling,
+			TTL:     s.MaxAge,
+		})
 		if err == nil {
 			s.rawID = cookie.Value
 			s.id = hashedID
@@ -89,8 +93,14 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	s.setCookie(w)
 
+	// TODO: move to function for reuse
+	opt := StoreOption{
+		Rolling: s.Rolling,
+		TTL:     s.MaxAge,
+	}
+
 	if s.destroy {
-		m.config.Store.Del(s.id)
+		m.config.Store.Del(s.id, opt)
 		return nil
 	}
 
@@ -102,18 +112,18 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 	// if session not modified, don't save to store to prevent store overflow
 	if !s.Changed() {
-		return m.config.Store.Touch(s.id, s.MaxAge)
+		return nil
 	}
 
 	// check is regenerate
 	if len(s.oldID) > 0 {
 		if m.config.DeleteOldSession {
-			m.config.Store.Del(s.oldID)
+			m.config.Store.Del(s.oldID, opt)
 		} else {
 			// save old session data if not delete
 			s.oldData[timestampKey] = int64(0)
 			s.oldData[destroyedKey] = time.Now().UnixNano()
-			err := m.config.Store.Set(s.oldID, s.oldData, s.MaxAge)
+			err := m.config.Store.Set(s.oldID, s.oldData, opt)
 			if err != nil {
 				return err
 			}
@@ -122,6 +132,6 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 	// save sesion data to store
 	s.Set(timestampKey, time.Now().Unix())
-	err := m.config.Store.Set(s.id, s.data, s.MaxAge)
+	err := m.config.Store.Set(s.id, s.data, opt)
 	return err
 }
