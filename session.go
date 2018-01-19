@@ -45,7 +45,7 @@ func (data Data) Clone() Data {
 
 // session internal data
 const (
-	flashKey = "session/flash"
+	flashKey = "_session/flash"
 )
 
 // ID returns session id or hashed session id if enable hash id

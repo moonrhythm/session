@@ -16,8 +16,8 @@ type Manager struct {
 
 // manager internal data
 const (
-	timestampKey = "session/timestamp"
-	destroyedKey = "session/destroyed" // for detect session hijack
+	timestampKey = "_session/timestamp"
+	destroyedKey = "_session/destroyed" // for detect session hijack
 )
 
 // New creates new session manager
