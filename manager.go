@@ -69,17 +69,19 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 	// get session id from cookie
 	cookie, err := r.Cookie(name)
 	if err == nil && len(cookie.Value) > 0 {
-		parts := strings.Split(cookie.Value, ".")
-		rawID := parts[0]
+		var rawID string
 
 		// verify signature
 		if len(m.config.Keys) > 0 {
-			if len(parts) == 2 && verify(rawID, parts[1], m.config.Keys) {
-				goto validSignature
+			parts := strings.Split(cookie.Value, ".")
+			rawID = parts[0]
+
+			if len(parts) != 2 || !verify(rawID, parts[1], m.config.Keys) {
+				goto invalidSignature
 			}
-			goto invalidSignature
+		} else {
+			rawID = cookie.Value
 		}
-	validSignature:
 
 		hashedID := m.hashID(rawID)
 
