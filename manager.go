@@ -67,17 +67,15 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		Rolling:  m.config.Rolling,
 	}
 
-	// get session key from cookie
+	// get session id from cookie
 	cookie, err := r.Cookie(name)
 	if err == nil && len(cookie.Value) > 0 {
 		parts := strings.Split(cookie.Value, ".")
 		rawID := parts[0]
 
 		// verify signature
-		if len(parts) == 2 {
-			if !verify(rawID, parts[1], m.config.Keys) {
-				goto invalidSignature
-			}
+		if len(parts) == 2 && !verify(rawID, parts[1], m.config.Keys) {
+			goto invalidSignature
 		}
 
 		hashedID := m.hashID(rawID)
