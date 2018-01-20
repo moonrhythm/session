@@ -235,13 +235,19 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
+	value := s.rawID
+	if len(s.manager.config.Keys) > 0 {
+		digest := sign(value, s.manager.config.Keys[0])
+		value += "." + digest
+	}
+
 	setCookie(w, &cookie{
 		Cookie: http.Cookie{
 			Name:     s.Name,
 			Domain:   s.Domain,
 			Path:     s.Path,
 			HttpOnly: s.HTTPOnly,
-			Value:    s.rawID,
+			Value:    value,
 			MaxAge:   int(s.MaxAge / time.Second),
 			Expires:  time.Now().Add(s.MaxAge),
 			Secure:   s.Secure,

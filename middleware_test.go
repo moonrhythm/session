@@ -692,6 +692,9 @@ func TestSignature(t *testing.T) {
 		if c == 0 {
 			s.Set("a", 1)
 			c++
+		} else if c == 999 {
+			assert.True(t, s.IsNew())
+			assert.Nil(t, s.Get("a"))
 		} else {
 			assert.Equal(t, s.GetInt("a"), 1)
 		}
@@ -731,6 +734,7 @@ func TestSignature(t *testing.T) {
 	r = httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(cs[0])
 	h.ServeHTTP(w, r)
+	cs1 := w.Result().Cookies()
 
 	h = session.Middleware(session.Config{
 		Keys: [][]byte{
@@ -739,6 +743,13 @@ func TestSignature(t *testing.T) {
 		Store: store,
 	})(hh)
 
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.AddCookie(cs1[0])
+	h.ServeHTTP(w, r)
+
+	// invalid signature
+	c = 999
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/", nil)
 	r.AddCookie(cs[0])

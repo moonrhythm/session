@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -69,17 +70,28 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 	// get session key from cookie
 	cookie, err := r.Cookie(name)
 	if err == nil && len(cookie.Value) > 0 {
-		hashedID := m.hashID(cookie.Value)
+		parts := strings.Split(cookie.Value, ".")
+		rawID := parts[0]
+
+		// verify signature
+		if len(parts) == 2 {
+			if !verify(rawID, parts[1], m.config.Keys) {
+				goto invalidSignature
+			}
+		}
+
+		hashedID := m.hashID(rawID)
 
 		// get session data from store
 		s.data, err = m.config.Store.Get(hashedID, makeStoreOption(m, &s))
 		if err == nil {
-			s.rawID = cookie.Value
+			s.rawID = rawID
 			s.id = hashedID
 		}
 		// DO NOT set session id to cookie value if not found in store
 		// to prevent session fixation attack
 	}
+invalidSignature:
 
 	if len(s.id) == 0 {
 		s.rawID = m.config.GenerateID()
