@@ -194,6 +194,11 @@ func (s *Session) Regenerate() {
 	s.changed = true
 }
 
+// IsNew checks is new session
+func (s *Session) IsNew() bool {
+	return s.isNew
+}
+
 // Renew clear all data in current session
 // and regenerate session id
 func (s *Session) Renew() {
