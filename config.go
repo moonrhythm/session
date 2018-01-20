@@ -29,9 +29,6 @@ type Config struct {
 	// TrustProxy, also checks X-Forwarded-Proto when use prefer secure
 	TrustProxy bool
 
-	// DisableRenew disable auto renew session
-	DisableRenew bool
-
 	// DisablaHashID disables hash session id when save to store
 	DisableHashID bool
 

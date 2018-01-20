@@ -144,8 +144,7 @@ func TestSessionGetSet(t *testing.T) {
 	)
 
 	h := session.Middleware(session.Config{
-		MaxAge:       time.Second,
-		DisableRenew: true,
+		MaxAge: time.Second,
 		Store: &mockStore{
 			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setCalled++
@@ -304,7 +303,6 @@ func TestRegenerate(t *testing.T) {
 	)
 
 	h := session.Middleware(session.Config{
-		DisableRenew: true,
 		Store: &mockStore{
 			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setValue[key] = value
@@ -378,7 +376,6 @@ func TestRegenerateDeleteOldSession(t *testing.T) {
 	setValue := make(map[string]session.Data)
 
 	h := session.Middleware(session.Config{
-		DisableRenew:     true,
 		DeleteOldSession: true,
 		Store: &mockStore{
 			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
@@ -629,7 +626,6 @@ func TestHijack(t *testing.T) {
 	setValue := make(map[string]session.Data)
 
 	h := session.Middleware(session.Config{
-		DisableRenew: true,
 		Store: &mockStore{
 			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setValue[key] = value

@@ -19,8 +19,7 @@ func TestManagerGetSave(t *testing.T) {
 	)
 
 	m := session.New(session.Config{
-		MaxAge:       time.Second,
-		DisableRenew: true,
+		MaxAge: time.Second,
 		Store: &mockStore{
 			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
 				setKey = key
