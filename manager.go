@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -37,16 +36,16 @@ func New(config Config) *Manager {
 		}
 	}
 
-	m.hashID = func(id string) string {
-		h := sha256.New()
-		h.Write([]byte(id))
-		h.Write(config.Secret)
-		return strings.TrimRight(base64.URLEncoding.EncodeToString(h.Sum(nil)), "=")
-	}
-
 	if config.DisableHashID {
 		m.hashID = func(id string) string {
 			return id
+		}
+	} else {
+		m.hashID = func(id string) string {
+			h := sha256.New()
+			h.Write([]byte(id))
+			h.Write(config.Secret)
+			return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 		}
 	}
 

@@ -6,8 +6,10 @@ import (
 
 // Config is the session manager config
 type Config struct {
-	Store  Store
-	Secret []byte // session id salt when put to store
+	Store Store
+
+	// Secret is the salt for hash session id before put to store
+	Secret []byte
 
 	// Cookie config
 	Domain   string
@@ -27,9 +29,11 @@ type Config struct {
 	// TrustProxy, also checks X-Forwarded-Proto when use prefer secure
 	TrustProxy bool
 
-	// Disable features
-	DisableRenew  bool // disable auto renew session
-	DisableHashID bool // disable hash session id when save to store
+	// DisableRenew disable auto renew session
+	DisableRenew bool
+
+	// DisablaHashID disables hash session id when save to store
+	DisableHashID bool
 
 	// GenerateID is the generate id function
 	GenerateID func() string
