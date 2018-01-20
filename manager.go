@@ -73,9 +73,13 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		rawID := parts[0]
 
 		// verify signature
-		if len(parts) == 2 && !verify(rawID, parts[1], m.config.Keys) {
+		if len(m.config.Keys) > 0 {
+			if len(parts) == 2 && verify(rawID, parts[1], m.config.Keys) {
+				goto validSignature
+			}
 			goto invalidSignature
 		}
+	validSignature:
 
 		hashedID := m.hashID(rawID)
 
