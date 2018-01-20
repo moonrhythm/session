@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -28,7 +27,7 @@ func New(config Config) *Manager {
 	if m.config.GenerateID == nil {
 		m.config.GenerateID = func() string {
 			b := make([]byte, 32)
-			if _, err := io.ReadFull(rand.Reader, b); err != nil {
+			if _, err := rand.Read(b); err != nil {
 				// this should never happened
 				// or something wrong with OS's crypto pseudorandom generator
 				panic(err)
