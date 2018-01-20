@@ -44,11 +44,6 @@ func (data Data) Clone() Data {
 	return r
 }
 
-// session internal data
-const (
-	flashKey = "_session/flash"
-)
-
 // ID returns session id or hashed session id if enable hash id
 func (s *Session) ID() string {
 	return s.id
@@ -199,6 +194,11 @@ func (s *Session) Regenerate() {
 	s.changed = true
 }
 
+// IsNew checks is new session
+func (s *Session) IsNew() bool {
+	return s.isNew
+}
+
 // Renew clear all data in current session
 // and regenerate session id
 func (s *Session) Renew() {
@@ -235,13 +235,19 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
+	value := s.rawID
+	if len(s.manager.config.Keys) > 0 {
+		digest := sign(value, s.manager.config.Keys[0])
+		value += "." + digest
+	}
+
 	setCookie(w, &cookie{
 		Cookie: http.Cookie{
 			Name:     s.Name,
 			Domain:   s.Domain,
 			Path:     s.Path,
 			HttpOnly: s.HTTPOnly,
-			Value:    s.rawID,
+			Value:    value,
 			MaxAge:   int(s.MaxAge / time.Second),
 			Expires:  time.Now().Add(s.MaxAge),
 			Secure:   s.Secure,

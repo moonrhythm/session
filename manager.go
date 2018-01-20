@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -15,12 +14,6 @@ type Manager struct {
 	config Config
 	hashID func(id string) string
 }
-
-// manager internal data
-const (
-	timestampKey = "_session/timestamp"
-	destroyedKey = "_session/destroyed" // for detect session hijack
-)
 
 // New creates new session manager
 func New(config Config) *Manager {
@@ -34,7 +27,7 @@ func New(config Config) *Manager {
 	if m.config.GenerateID == nil {
 		m.config.GenerateID = func() string {
 			b := make([]byte, 32)
-			if _, err := io.ReadFull(rand.Reader, b); err != nil {
+			if _, err := rand.Read(b); err != nil {
 				// this should never happened
 				// or something wrong with OS's crypto pseudorandom generator
 				panic(err)
@@ -43,16 +36,16 @@ func New(config Config) *Manager {
 		}
 	}
 
-	m.hashID = func(id string) string {
-		h := sha256.New()
-		h.Write([]byte(id))
-		h.Write(config.Secret)
-		return strings.TrimRight(base64.URLEncoding.EncodeToString(h.Sum(nil)), "=")
-	}
-
 	if config.DisableHashID {
 		m.hashID = func(id string) string {
 			return id
+		}
+	} else {
+		m.hashID = func(id string) string {
+			h := sha256.New()
+			h.Write([]byte(id))
+			h.Write(config.Secret)
+			return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 		}
 	}
 
@@ -73,20 +66,35 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		Rolling:  m.config.Rolling,
 	}
 
-	// get session key from cookie
+	// get session id from cookie
 	cookie, err := r.Cookie(name)
 	if err == nil && len(cookie.Value) > 0 {
-		hashedID := m.hashID(cookie.Value)
+		var rawID string
+
+		// verify signature
+		if len(m.config.Keys) > 0 {
+			parts := strings.Split(cookie.Value, ".")
+			rawID = parts[0]
+
+			if len(parts) != 2 || !verify(rawID, parts[1], m.config.Keys) {
+				goto invalidSignature
+			}
+		} else {
+			rawID = cookie.Value
+		}
+
+		hashedID := m.hashID(rawID)
 
 		// get session data from store
 		s.data, err = m.config.Store.Get(hashedID, makeStoreOption(m, &s))
 		if err == nil {
-			s.rawID = cookie.Value
+			s.rawID = rawID
 			s.id = hashedID
 		}
 		// DO NOT set session id to cookie value if not found in store
 		// to prevent session fixation attack
 	}
+invalidSignature:
 
 	if len(s.id) == 0 {
 		s.rawID = m.config.GenerateID()

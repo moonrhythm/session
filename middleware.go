@@ -47,11 +47,14 @@ func (m *Manager) Middleware() middleware.Middleware {
 						if err != nil {
 							panic("session: " + err.Error())
 						}
-
 					}
 				},
 			}
 			h.ServeHTTP(&nw, nr)
+
+			if !nw.wroteHeader {
+				nw.beforeWriteHeader()
+			}
 		})
 	}
 }
