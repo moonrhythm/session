@@ -231,6 +231,9 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		return
 	}
 
+	if s.isNew && !s.Changed() {
+		return
+	}
 	if !s.Rolling && (!s.isNew || !s.Changed()) {
 		return
 	}
