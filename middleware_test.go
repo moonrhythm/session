@@ -683,6 +683,84 @@ func TestHijack(t *testing.T) {
 	h.ServeHTTP(w, r)
 }
 
+func TestSignature(t *testing.T) {
+	c := 0
+
+	store := memory.New(memory.Config{})
+	hh := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context(), sessName)
+		if c == 0 {
+			s.Set("a", 1)
+			c++
+		} else {
+			assert.Equal(t, s.GetInt("a"), 1)
+		}
+		w.Write([]byte("ok"))
+	})
+
+	h := session.Middleware(session.Config{
+		Keys: [][]byte{
+			[]byte("key1"),
+		},
+		Store: store,
+	})(hh)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+
+	cs := w.Result().Cookies()
+	assert.Len(t, cs, 1)
+	assert.Contains(t, cs[0].Value, ".")
+
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.AddCookie(cs[0])
+	h.ServeHTTP(w, r)
+
+	h = session.Middleware(session.Config{
+		Keys: [][]byte{
+			[]byte("key2"),
+			[]byte("key1"),
+		},
+		Store:   store,
+		Rolling: true,
+	})(hh)
+
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.AddCookie(cs[0])
+	h.ServeHTTP(w, r)
+
+	h = session.Middleware(session.Config{
+		Keys: [][]byte{
+			[]byte("key2"),
+		},
+		Store: store,
+	})(hh)
+
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.AddCookie(cs[0])
+	h.ServeHTTP(w, r)
+}
+
+func TestEmptyBody(t *testing.T) {
+	h := session.Middleware(session.Config{
+		Store: memory.New(memory.Config{}),
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := session.Get(r.Context(), sessName)
+		s.Set("a", 1)
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+
+	cs := w.Result().Cookies()
+	assert.Len(t, cs, 1)
+}
+
 func BenchmarkDefaultConfig(b *testing.B) {
 	h := session.Middleware(session.Config{
 		Store: &mockStore{},

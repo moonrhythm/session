@@ -11,6 +11,9 @@ type Config struct {
 	// Secret is the salt for hash session id before put to store
 	Secret []byte
 
+	// Keys is the keys to sign session id
+	Keys [][]byte
+
 	// Cookie config
 	Domain   string
 	HTTPOnly bool
