@@ -16,12 +16,6 @@ type Manager struct {
 	hashID func(id string) string
 }
 
-// manager internal data
-const (
-	timestampKey = "_session/timestamp"
-	destroyedKey = "_session/destroyed" // for detect session hijack
-)
-
 // New creates new session manager
 func New(config Config) *Manager {
 	if config.Store == nil {
