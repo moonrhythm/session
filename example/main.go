@@ -11,16 +11,16 @@ import (
 
 func main() {
 	h := session.New(session.Config{
-		Store:      memory.New(memory.Config{}),
-		HTTPOnly:   true,
-		Secret:     []byte("supersalt"),
-		Keys:       [][]byte{[]byte("supersecret")},
-		Path:       "/",
-		Rolling:    true,
-		MaxAge:     time.Hour,
-		SameSite:   session.SameSiteLax,
-		Secure:     session.PreferSecure,
-		TrustProxy: true,
+		Store:    memory.New(memory.Config{}),
+		HTTPOnly: true,
+		Secret:   []byte("supersalt"),
+		Keys:     [][]byte{[]byte("supersecret")},
+		Path:     "/",
+		Rolling:  true,
+		MaxAge:   time.Hour,
+		SameSite: session.SameSiteLax,
+		Secure:   session.PreferSecure,
+		Proxy:    true,
 	}).Middleware()(http.HandlerFunc(handler))
 	http.ListenAndServe(":8080", h)
 }

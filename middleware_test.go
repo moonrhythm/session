@@ -195,9 +195,9 @@ func TestSecureFlag(t *testing.T) {
 
 	for _, c := range cases {
 		h := session.Middleware(session.Config{
-			Store:      &mockStore{},
-			Secure:     c.flag,
-			TrustProxy: true,
+			Store:  &mockStore{},
+			Secure: c.flag,
+			Proxy:  true,
 		})(mockHandler)
 
 		w := httptest.NewRecorder()
@@ -213,7 +213,7 @@ func TestSecureFlag(t *testing.T) {
 	}
 }
 
-func TestSecureFlagWithoutTrustProxy(t *testing.T) {
+func TestSecureFlagWithoutProxy(t *testing.T) {
 	cases := []struct {
 		flag     session.Secure
 		expected bool
@@ -225,9 +225,9 @@ func TestSecureFlagWithoutTrustProxy(t *testing.T) {
 
 	for _, c := range cases {
 		h := session.Middleware(session.Config{
-			Store:      &mockStore{},
-			Secure:     c.flag,
-			TrustProxy: false,
+			Store:  &mockStore{},
+			Secure: c.flag,
+			Proxy:  false,
 		})(mockHandler)
 
 		w := httptest.NewRecorder()

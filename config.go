@@ -29,8 +29,8 @@ type Config struct {
 	// Rolling, set cookie every responses
 	Rolling bool
 
-	// TrustProxy, also checks X-Forwarded-Proto when use prefer secure
-	TrustProxy bool
+	// Proxy, also checks X-Forwarded-Proto when use prefer secure
+	Proxy bool
 
 	// DisablaHashID disables hash session id when save to store
 	DisableHashID bool
