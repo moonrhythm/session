@@ -61,7 +61,7 @@ func (m *Manager) Get(r *http.Request, name string) *Session {
 		Path:     m.config.Path,
 		HTTPOnly: m.config.HTTPOnly,
 		MaxAge:   m.config.MaxAge,
-		Secure:   (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r, m.config.TrustProxy)),
+		Secure:   (m.config.Secure == ForceSecure) || (m.config.Secure == PreferSecure && isTLS(r, m.config.Proxy)),
 		SameSite: m.config.SameSite,
 		Rolling:  m.config.Rolling,
 	}
@@ -150,11 +150,11 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	return err
 }
 
-func isTLS(r *http.Request, trustProxy bool) bool {
+func isTLS(r *http.Request, proxy bool) bool {
 	if r.TLS != nil {
 		return true
 	}
-	if trustProxy && r.Header.Get("X-Forwarded-Proto") == "https" {
+	if proxy && r.Header.Get("X-Forwarded-Proto") == "https" {
 		return true
 	}
 	return false
