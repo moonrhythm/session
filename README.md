@@ -32,7 +32,7 @@ func main() {
 		}
 
 		s := session.Get(r.Context(), "sess")
-		cnt, _ := s.Get("counter").(int)
+		cnt := s.GetInt("counter")
 		cnt++
 		s.Set("counter", cnt)
 		w.Header().Set("Content-Type", "text/html")
@@ -96,7 +96,7 @@ func main() {
 		}
 
 		s := m.Get(r, "sess")
-		cnt, _ := s.Get("counter").(int)
+		cnt := s.GetInt("counter")
 		cnt++
 		s.Set("counter", cnt)
 		m.Save(w, s)

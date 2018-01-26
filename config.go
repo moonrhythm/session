@@ -26,6 +26,9 @@ type Config struct {
 	// better not to delete old session to avoid user loss session when unstable network
 	DeleteOldSession bool
 
+	// Resave forces session to save to store even if session was not modified
+	Resave bool
+
 	// Rolling, set cookie every responses
 	Rolling bool
 

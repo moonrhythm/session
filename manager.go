@@ -114,8 +114,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	opt := makeStoreOption(m, s)
 
 	if s.destroy {
-		m.config.Store.Del(s.id, opt)
-		return nil
+		return m.config.Store.Del(s.id, opt)
 	}
 
 	// detect is flash changed and encode new flash data
@@ -125,14 +124,17 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	}
 
 	// if session not modified, don't save to store to prevent store overflow
-	if !s.Changed() {
+	if !m.config.Resave && !s.Changed() {
 		return nil
 	}
 
 	// check is regenerate
 	if len(s.oldID) > 0 {
 		if m.config.DeleteOldSession {
-			m.config.Store.Del(s.oldID, opt)
+			err := m.config.Store.Del(s.oldID, opt)
+			if err != nil {
+				return err
+			}
 		} else {
 			// save old session data if not delete
 			s.oldData[timestampKey] = int64(0)
@@ -146,8 +148,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 	// save sesion data to store
 	s.Set(timestampKey, time.Now().Unix())
-	err := m.config.Store.Set(s.id, s.data, opt)
-	return err
+	return m.config.Store.Set(s.id, s.data, opt)
 }
 
 func (m *Manager) isSecure(r *http.Request) bool {
