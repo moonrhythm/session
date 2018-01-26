@@ -432,6 +432,43 @@ func TestRegenerateDeleteOldSession(t *testing.T) {
 	assert.Equal(t, "3", w.Body.String())
 }
 
+func TestResave(t *testing.T) {
+	setCalled := 0
+	setValue := make(map[string]session.Data)
+
+	h := session.Middleware(session.Config{
+		Resave: true,
+		Store: &mockStore{
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
+				setCalled++
+				setValue[key] = value
+				return nil
+			},
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+				return setValue[key], nil
+			},
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sess := session.Get(r.Context(), sessName)
+		if setCalled == 0 {
+			sess.Set("a", 1)
+		}
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+
+	sess := w.Header().Get("Set-Cookie")
+
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", sess)
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+
+	assert.Equal(t, 2, setCalled)
+}
+
 func TestRolling(t *testing.T) {
 	c := 0
 
