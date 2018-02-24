@@ -18,7 +18,7 @@ import (
 const sessName = "sess"
 
 func mockHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	s := session.Get(r.Context(), sessName)
+	s, _ := session.Get(r.Context(), sessName)
 	s.Set("test", 1)
 	w.Write([]byte("ok"))
 }
@@ -89,7 +89,7 @@ func TestEmptySessionFlash(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		f := s.Flash()
 		f.Clear()
 		w.Write([]byte("ok"))
@@ -158,7 +158,7 @@ func TestSessionGetSet(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		assert.NotEmpty(t, s.ID())
 		c, _ := s.Get("test").(int)
 		s.Set("test", c+1)
@@ -322,7 +322,7 @@ func TestRegenerate(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("test", 1)
 			c = 1
@@ -391,7 +391,7 @@ func TestRegenerateDeleteOldSession(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("test", 1)
 			c = 1
@@ -449,7 +449,7 @@ func TestResave(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess := session.Get(r.Context(), sessName)
+		sess, _ := session.Get(r.Context(), sessName)
 		if setCalled == 0 {
 			sess.Set("a", 1)
 		}
@@ -477,7 +477,7 @@ func TestRolling(t *testing.T) {
 		Rolling: true,
 		Store:   memory.New(memory.Config{}),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("test", 1)
 			c = 1
@@ -509,7 +509,7 @@ func TestRollingDisable(t *testing.T) {
 		Rolling: false,
 		Store:   memory.New(memory.Config{}),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("test", 1)
 			c = 1
@@ -558,7 +558,7 @@ func TestDestroy(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("test", 1)
 			c = 1
@@ -605,10 +605,10 @@ func TestSessionMultipleGet(t *testing.T) {
 	h := session.Middleware(session.Config{
 		Store: &mockStore{},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), "sess")
+		s, _ := session.Get(r.Context(), "sess")
 		s.Set("test", 1)
 
-		s = session.Get(r.Context(), "sess")
+		s, _ = session.Get(r.Context(), "sess")
 		assert.Equal(t, 1, s.Get("test"), "expected get session 2 times must not mutated value")
 	}))
 
@@ -622,8 +622,9 @@ func TestEmptyContext(t *testing.T) {
 		r := recover()
 		assert.Nil(t, r, "expected get session from empty context must not panic")
 	}()
-	s := session.Get(context.Background(), "sess")
+	s, err := session.Get(context.Background(), "sess")
 	assert.Nil(t, s, "expected get session from empty context returns nil")
+	assert.Equal(t, session.ErrNotPassMiddleware, err)
 }
 
 func TestFlash(t *testing.T) {
@@ -631,7 +632,7 @@ func TestFlash(t *testing.T) {
 	h := middleware.Chain(
 		session.Middleware(session.Config{Store: memory.New(memory.Config{}), MaxAge: time.Minute}),
 	)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), "sess")
+		s, _ := session.Get(r.Context(), "sess")
 		if i == 0 {
 			s.Flash().Set("a", "1")
 			s.Flash().Set("b", "2")
@@ -677,7 +678,7 @@ func TestHijack(t *testing.T) {
 			},
 		},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("test", 1)
 			c = 1
@@ -725,7 +726,7 @@ func TestSignature(t *testing.T) {
 
 	store := memory.New(memory.Config{})
 	hh := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
 			s.Set("a", 1)
 			c++
@@ -797,7 +798,7 @@ func TestEmptyBody(t *testing.T) {
 	h := session.Middleware(session.Config{
 		Store: memory.New(memory.Config{}),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		s.Set("a", 1)
 	}))
 

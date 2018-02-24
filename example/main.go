@@ -26,7 +26,7 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	sess := session.Get(r.Context(), "sess")
+	sess, _ := session.Get(r.Context(), "sess")
 	cnt := sess.GetInt("cnt")
 	cnt++
 	sess.Set("cnt", cnt)

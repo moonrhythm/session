@@ -1,7 +1,15 @@
 package session
 
 import (
+	"errors"
 	"time"
+)
+
+// Errors
+var (
+	// ErrNotFound is the error when session not found
+	// store must return ErrNotFound if session data not exists
+	ErrNotFound = errors.New("session: not found")
 )
 
 // Store interface

@@ -34,7 +34,7 @@ func TestManagerGetSave(t *testing.T) {
 	})
 
 	h := func(w http.ResponseWriter, r *http.Request) {
-		s := m.Get(r, sessName)
+		s, _ := m.Get(r, sessName)
 		assert.NotEmpty(t, s.ID())
 		c, _ := s.Get("test").(int)
 		s.Set("test", c+1)

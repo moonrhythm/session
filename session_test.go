@@ -14,7 +14,7 @@ func TestSessionRenew(t *testing.T) {
 	h := session.Middleware(session.Config{
 		Store: &mockStore{},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), sessName)
+		s, _ := session.Get(r.Context(), sessName)
 		s.Set("a", 1)
 		s.Renew()
 		assert.True(t, s.Changed())
