@@ -31,7 +31,7 @@ func main() {
 			return
 		}
 
-		s := session.Get(r.Context(), "sess")
+		s, _ := session.Get(r.Context(), "sess")
 		cnt := s.GetInt("counter")
 		cnt++
 		s.Set("counter", cnt)
@@ -39,7 +39,7 @@ func main() {
 		fmt.Fprintf(w, "Couter: %d<br><a href=\"/reset\">Reset</a>", cnt)
 	})
 	mux.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
-		s := session.Get(r.Context(), "sess")
+		s, _ := session.Get(r.Context(), "sess")
 		s.Del("counter")
 		http.Redirect(w, r, "/", http.StatusFound)
 	})
@@ -95,7 +95,7 @@ func main() {
 			return
 		}
 
-		s := m.Get(r, "sess")
+		s, _ := m.Get(r, "sess")
 		cnt := s.GetInt("counter")
 		cnt++
 		s.Set("counter", cnt)
@@ -104,7 +104,7 @@ func main() {
 		fmt.Fprintf(w, "Couter: %d<br><a href=\"/reset\">Reset</a>", cnt)
 	})
 	mux.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
-		s := m.Get(r, "sess")
+		s, _ := m.Get(r, "sess")
 		s.Del("counter")
 		m.Save(w, s)
 		http.Redirect(w, r, "/", http.StatusFound)
