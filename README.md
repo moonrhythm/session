@@ -4,7 +4,6 @@
 [![Coverage Status](https://coveralls.io/repos/github/acoshift/session/badge.svg?branch=master)](https://coveralls.io/github/acoshift/session?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/acoshift/session)](https://goreportcard.com/report/github.com/acoshift/session)
 [![GoDoc](https://godoc.org/github.com/acoshift/session?status.svg)](https://godoc.org/github.com/acoshift/session)
-[![Sourcegraph](https://sourcegraph.com/github.com/acoshift/session/-/badge.svg)](https://sourcegraph.com/github.com/acoshift/session?badge)
 
 Session Middleware for Golang
 
