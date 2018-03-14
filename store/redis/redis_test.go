@@ -52,7 +52,7 @@ func TestRedis(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestRedisWithoutMaxAge(t *testing.T) {
+func TestRedisWithoutTTL(t *testing.T) {
 	s := store.New(store.Config{Prefix: "session:", Pool: &redis.Pool{
 		Dial: func() (redis.Conn, error) {
 			return redis.Dial("tcp", "localhost:6379")

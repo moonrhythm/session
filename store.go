@@ -28,6 +28,6 @@ type StoreOption struct {
 func makeStoreOption(m *Manager, s *Session) StoreOption {
 	return StoreOption{
 		Rolling: s.Rolling,
-		TTL:     s.MaxAge,
+		TTL:     m.config.IdleTimeout,
 	}
 }

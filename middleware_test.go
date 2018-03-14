@@ -45,6 +45,41 @@ func TestDefaultConfig(t *testing.T) {
 	assert.NotEmpty(t, cookie, "expected cookie not empty")
 }
 
+func TestSessionCookie(t *testing.T) {
+	var (
+		setCalled bool
+		setKey    string
+		setValue  session.Data
+		setTTL    time.Duration
+	)
+
+	h := session.Middleware(session.Config{
+		IdleTimeout: time.Second,
+		Store: &mockStore{
+			SetFunc: func(key string, value session.Data, opt session.StoreOption) error {
+				setCalled = true
+				setKey = key
+				setValue = value
+				setTTL = opt.TTL
+				return nil
+			},
+		},
+	})(mockHandler)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	assert.True(t, setCalled, "expected store was called")
+	assert.NotEmpty(t, setKey, "expected key not empty")
+	assert.NotEmpty(t, setValue, "expected value not empty")
+	assert.Equal(t, time.Second, setTTL)
+
+	cs := w.Result().Cookies()
+	assert.Len(t, cs, 1, "expected response has 1 cookie; got %d", len(cs))
+	assert.NotEqual(t, setKey, cs[0].Value, "expected session id was hashed")
+	assert.Empty(t, cs[0].MaxAge)
+}
+
 func TestEmptySession(t *testing.T) {
 	h := session.Middleware(session.Config{
 		Store: &mockStore{

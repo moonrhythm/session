@@ -36,7 +36,7 @@ func New(config Config) *Manager {
 		}
 	}
 
-	if config.DisableHashID {
+	if m.config.DisableHashID {
 		m.hashID = func(id string) string {
 			return id
 		}
@@ -47,6 +47,10 @@ func New(config Config) *Manager {
 			h.Write(config.Secret)
 			return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 		}
+	}
+
+	if m.config.IdleTimeout <= 0 {
+		m.config.IdleTimeout = m.config.MaxAge
 	}
 
 	return &m
