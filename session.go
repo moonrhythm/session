@@ -244,19 +244,23 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 		value += "." + digest
 	}
 
-	setCookie(w, &cookie{
+	cs := cookie{
 		Cookie: http.Cookie{
 			Name:     s.Name,
 			Domain:   s.Domain,
 			Path:     s.Path,
 			HttpOnly: s.HTTPOnly,
 			Value:    value,
-			MaxAge:   int(s.MaxAge / time.Second),
-			Expires:  time.Now().Add(s.MaxAge),
 			Secure:   s.Secure,
 		},
 		SameSite: s.SameSite,
-	})
+	}
+	if s.MaxAge > 0 {
+		cs.MaxAge = int(s.MaxAge / time.Second)
+		cs.Expires = time.Now().Add(s.MaxAge)
+	}
+
+	setCookie(w, cs)
 }
 
 // Flash returns flash from session
