@@ -16,6 +16,7 @@ func TestRedis(t *testing.T) {
 		Prefix: "session:",
 		Client: redis.NewClient(&redis.Options{
 			Addr: "localhost:6379",
+			DB:   2,
 		}),
 	})
 
@@ -58,6 +59,7 @@ func TestRedisWithoutTTL(t *testing.T) {
 		Prefix: "session:",
 		Client: redis.NewClient(&redis.Options{
 			Addr: "localhost:6379",
+			DB:   2,
 		}),
 	})
 
