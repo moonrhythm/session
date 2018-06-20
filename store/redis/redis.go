@@ -3,40 +3,37 @@ package redis
 import (
 	"bytes"
 	"encoding/gob"
-	"time"
 
-	"github.com/gomodule/redigo/redis"
+	"github.com/go-redis/redis"
 
 	"github.com/acoshift/session"
 )
 
 // Config is the redis store config
 type Config struct {
-	Pool   *redis.Pool
+	Client *redis.Client
 	Prefix string
 }
 
 // New creates new redis store
 func New(config Config) session.Store {
 	return &redisStore{
-		pool:   config.Pool,
+		client: config.Client,
 		prefix: config.Prefix,
 	}
 }
 
 type redisStore struct {
-	pool   *redis.Pool
+	client *redis.Client
 	prefix string
 }
 
 func (s *redisStore) Get(key string, opt session.StoreOption) (session.Data, error) {
-	c := s.pool.Get()
-	data, err := redis.Bytes(c.Do("GET", s.prefix+key))
+	data, err := s.client.Get(s.prefix + key).Bytes()
 	if opt.Rolling && opt.TTL > 0 {
-		c.Do("EXPIRE", s.prefix+key, int64(opt.TTL/time.Second))
+		s.client.Expire(s.prefix+key, opt.TTL)
 	}
-	c.Close()
-	if err == redis.ErrNil {
+	if err == redis.Nil {
 		return nil, session.ErrNotFound
 	}
 	if err != nil {
@@ -57,20 +54,9 @@ func (s *redisStore) Set(key string, value session.Data, opt session.StoreOption
 	if err != nil {
 		return err
 	}
-
-	c := s.pool.Get()
-	if opt.TTL > 0 {
-		_, err = c.Do("SETEX", s.prefix+key, int64(opt.TTL/time.Second), buf.Bytes())
-	} else {
-		_, err = c.Do("SET", s.prefix+key, buf.Bytes())
-	}
-	c.Close()
-	return err
+	return s.client.Set(s.prefix+key, buf.Bytes(), opt.TTL).Err()
 }
 
 func (s *redisStore) Del(key string, opt session.StoreOption) error {
-	c := s.pool.Get()
-	_, err := c.Do("DEL", s.prefix+key)
-	c.Close()
-	return err
+	return s.client.Del(s.prefix + key).Err()
 }
