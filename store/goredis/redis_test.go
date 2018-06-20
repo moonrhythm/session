@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/acoshift/session"
-	store "github.com/acoshift/session/store/redis"
+	store "github.com/acoshift/session/store/goredis"
 )
 
 func TestRedis(t *testing.T) {
