@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/gomodule/redigo/redis"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/acoshift/session"
@@ -12,12 +12,11 @@ import (
 )
 
 func TestRedis(t *testing.T) {
-	s := store.New(store.Config{
-		Prefix: "session:",
-		Client: redis.NewClient(&redis.Options{
-			Addr: "localhost:6379",
-		}),
-	})
+	s := store.New(store.Config{Prefix: "session:", Pool: &redis.Pool{
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp", "localhost:6379")
+		},
+	}})
 
 	opt := session.StoreOption{TTL: time.Second}
 
@@ -54,12 +53,11 @@ func TestRedis(t *testing.T) {
 }
 
 func TestRedisWithoutTTL(t *testing.T) {
-	s := store.New(store.Config{
-		Prefix: "session:",
-		Client: redis.NewClient(&redis.Options{
-			Addr: "localhost:6379",
-		}),
-	})
+	s := store.New(store.Config{Prefix: "session:", Pool: &redis.Pool{
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp", "localhost:6379")
+		},
+	}})
 
 	opt := session.StoreOption{}
 
