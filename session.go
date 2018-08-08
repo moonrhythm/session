@@ -130,9 +130,12 @@ func (s *Session) Pop(key string) interface{} {
 	if s.data == nil {
 		return nil
 	}
-	r := s.data[key]
-	s.changed = true
-	delete(s.data, key)
+
+	r, ok := s.data[key]
+	if ok {
+		s.changed = true
+		delete(s.data, key)
+	}
 	return r
 }
 
