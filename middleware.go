@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-
-	"github.com/acoshift/middleware"
 )
 
 // Errors
@@ -22,14 +20,14 @@ type (
 // Middleware is the Manager middleware wrapper
 //
 // New(config).Middleware()
-func Middleware(config Config) middleware.Middleware {
+func Middleware(config Config) func(http.Handler) http.Handler {
 	return New(config).Middleware()
 }
 
 // Middleware injects session manager into request's context.
 //
 // All data changed before write response writer's header will be save.
-func (m *Manager) Middleware() middleware.Middleware {
+func (m *Manager) Middleware() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
