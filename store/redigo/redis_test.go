@@ -1,4 +1,4 @@
-package redis_test
+package redigo_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/acoshift/session"
-	store "github.com/acoshift/session/store/redis"
+	store "github.com/acoshift/session/store/redigo"
 )
 
 func TestRedis(t *testing.T) {

@@ -55,3 +55,25 @@ func TestManagerGetSave(t *testing.T) {
 	h(w, r)
 	assert.Equal(t, "1", w.Body.String())
 }
+
+func TestManagerGetError(t *testing.T) {
+	m := session.New(session.Config{
+		MaxAge: time.Second,
+		Store: &mockStore{
+			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+				return nil, fmt.Errorf("store error")
+			},
+		},
+	})
+
+	h := func(w http.ResponseWriter, r *http.Request) {
+		s, err := m.Get(r, sessName)
+		assert.Error(t, err)
+		assert.Nil(t, s)
+	}
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", sessName+"=test")
+	h(w, r)
+}
