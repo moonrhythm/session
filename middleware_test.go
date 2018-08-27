@@ -302,11 +302,12 @@ func TestHttpOnlyFlag(t *testing.T) {
 
 func TestSameSiteFlag(t *testing.T) {
 	cases := []struct {
-		flag session.SameSite
+		flag http.SameSite
 	}{
-		{session.SameSiteNone},
-		{session.SameSiteLax},
-		{session.SameSiteStrict},
+		{0},
+		{http.SameSiteDefaultMode},
+		{http.SameSiteLaxMode},
+		{http.SameSiteStrictMode},
 	}
 
 	for _, c := range cases {
@@ -321,10 +322,10 @@ func TestSameSiteFlag(t *testing.T) {
 
 		cs := w.Result().Cookies()
 		assert.Len(t, cs, 1)
-		if c.flag == session.SameSiteNone {
-			assert.Len(t, cs[0].Unparsed, 0)
+		if c.flag == 0 {
+			assert.Equal(t, http.SameSite(0), cs[0].SameSite)
 		} else {
-			assert.Equal(t, "SameSite="+string(c.flag), cs[0].Unparsed[0])
+			assert.Equal(t, c.flag, cs[0].SameSite)
 		}
 	}
 }
