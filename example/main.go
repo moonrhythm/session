@@ -18,7 +18,7 @@ func main() {
 		Path:     "/",
 		Rolling:  true,
 		MaxAge:   time.Hour,
-		SameSite: session.SameSiteLax,
+		SameSite: http.SameSiteLaxMode,
 		Secure:   session.PreferSecure,
 		Proxy:    true,
 	}).Middleware()(http.HandlerFunc(handler))
