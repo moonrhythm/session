@@ -126,7 +126,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 	// detect is flash changed and encode new flash data
 	if s.flash != nil && s.flash.Changed() {
-		b, _ := s.flash.Encode()
+		b, _ := s.flash.encode()
 		s.Set(flashKey, b)
 	}
 

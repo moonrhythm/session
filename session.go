@@ -3,8 +3,6 @@ package session
 import (
 	"net/http"
 	"time"
-
-	"github.com/acoshift/flash"
 )
 
 // Data stores session data
@@ -20,7 +18,7 @@ type Session struct {
 	destroy bool
 	changed bool
 	isNew   bool
-	flash   *flash.Flash
+	flash   *Flash
 
 	// cookie config
 	Name     string
@@ -265,15 +263,15 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 }
 
 // Flash returns flash from session
-func (s *Session) Flash() *flash.Flash {
+func (s *Session) Flash() *Flash {
 	if s.flash != nil {
 		return s.flash
 	}
 	if b, ok := s.Get(flashKey).([]byte); ok {
-		s.flash, _ = flash.Decode(b)
+		s.flash, _ = decodeFlash(b)
 	}
 	if s.flash == nil {
-		s.flash = flash.New()
+		s.flash = newFlash()
 	}
 	return s.flash
 }
