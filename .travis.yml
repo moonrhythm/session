@@ -10,5 +10,5 @@ before_install:
 - go get github.com/mattn/goveralls
 
 script:
-- go test -v -covermode=count -coverprofile=profile.cov . ./store/... ./flash/...
+- go test -v -covermode=count -coverprofile=profile.cov . ./store/...
 - $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
