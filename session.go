@@ -262,17 +262,14 @@ func (s *Session) setCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &cs)
 }
 
-// Flash returns flash from session
+// Flash returns flash from session,
 func (s *Session) Flash() *Flash {
 	if s.flash != nil {
 		return s.flash
 	}
+	s.flash = new(Flash)
 	if b, ok := s.Get(flashKey).([]byte); ok {
-		s.flash = new(Flash)
 		s.flash.decode(b)
-	}
-	if s.flash == nil {
-		s.flash = &Flash{}
 	}
 	return s.flash
 }
