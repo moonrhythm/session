@@ -5,29 +5,20 @@ import (
 	"encoding/gob"
 )
 
-type data map[string][]interface{}
+type flashData map[string][]interface{}
 
 // Flash type
 type Flash struct {
-	v       data
+	v       flashData
 	changed bool
 }
 
-func newFlash() *Flash {
-	return &Flash{}
-}
-
-func decodeFlash(b []byte) (*Flash, error) {
-	f := newFlash()
+func (f *Flash) decode(b []byte) error {
 	if len(b) == 0 {
-		return f, nil
+		return nil
 	}
 
-	err := gob.NewDecoder(bytes.NewReader(b)).Decode(&f.v)
-	if err != nil {
-		return nil, err
-	}
-	return f, nil
+	return gob.NewDecoder(bytes.NewReader(b)).Decode(&f.v)
 }
 
 // Encode encodes flash
@@ -63,7 +54,7 @@ func (f *Flash) Set(key string, value interface{}) {
 		f.changed = true
 	}
 	if f.v == nil {
-		f.v = make(data)
+		f.v = make(flashData)
 	}
 	f.v[key] = []interface{}{value}
 }
@@ -74,7 +65,7 @@ func (f *Flash) Add(key string, value interface{}) {
 		f.changed = true
 	}
 	if f.v == nil {
-		f.v = make(data)
+		f.v = make(flashData)
 	}
 	f.v[key] = append(f.v[key], value)
 }
@@ -166,8 +157,8 @@ func (f *Flash) Changed() bool {
 	return f.changed
 }
 
-func cloneValues(src data) data {
-	n := make(data, len(src))
+func cloneValues(src flashData) flashData {
+	n := make(flashData, len(src))
 	for k, vv := range src {
 		n[k] = make([]interface{}, len(vv))
 		for kk, vvv := range vv {

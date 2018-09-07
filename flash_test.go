@@ -8,7 +8,7 @@ import (
 
 func TestFlashNew(t *testing.T) {
 	Convey("Given new flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 
 		Convey("Flash should not be nil", func() {
 			So(f, ShouldNotBeNil)
@@ -62,7 +62,7 @@ func TestFlashNew(t *testing.T) {
 
 func TestFlashClear(t *testing.T) {
 	Convey("Given empty flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 
 		Convey("When clear", func() {
 			f.Clear()
@@ -74,7 +74,7 @@ func TestFlashClear(t *testing.T) {
 	})
 
 	Convey("Given not empty flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 		f.Add("a", 1)
 
 		Convey("When clear", func() {
@@ -103,7 +103,7 @@ func TestFlashClear(t *testing.T) {
 
 func TestFlashEncodeDecode(t *testing.T) {
 	Convey("Given not empty flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 		f.Add("a", 1)
 
 		Convey("Should be able to encode", func() {
@@ -126,7 +126,8 @@ func TestFlashEncodeDecode(t *testing.T) {
 			})
 
 			Convey("Encoded data should be able to decode", func() {
-				f, err := decodeFlash(b)
+				f := new(Flash)
+				err := f.decode(b)
 
 				Convey("Without error", func() {
 					So(err, ShouldBeNil)
@@ -149,7 +150,7 @@ func TestFlashEncodeDecode(t *testing.T) {
 	})
 
 	Convey("Given flash with invalid data", t, func() {
-		f := newFlash()
+		f := new(Flash)
 		f.Set("key", &struct{}{})
 
 		Convey("When encode", func() {
@@ -169,7 +170,8 @@ func TestFlashEncodeDecode(t *testing.T) {
 		b := []byte{}
 
 		Convey("Bytes should be able to decode", func() {
-			f, err := decodeFlash(b)
+			f := new(Flash)
+			err := f.decode(b)
 
 			Convey("Without error", func() {
 				So(err, ShouldBeNil)
@@ -197,14 +199,11 @@ func TestFlashEncodeDecode(t *testing.T) {
 		b := []byte("invalid data")
 
 		Convey("When decode", func() {
-			f, err := decodeFlash(b)
+			f := new(Flash)
+			err := f.decode(b)
 
 			Convey("Should error", func() {
 				So(err, ShouldNotBeNil)
-			})
-
-			Convey("Returns flash should be nil", func() {
-				So(f, ShouldBeNil)
 			})
 		})
 	})
@@ -212,7 +211,7 @@ func TestFlashEncodeDecode(t *testing.T) {
 
 func TestFlashDel(t *testing.T) {
 	Convey("Given not empty flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 		f.Add("a", 1)
 
 		Convey("When delete all keys", func() {
@@ -227,7 +226,7 @@ func TestFlashDel(t *testing.T) {
 
 func TestFlashValues(t *testing.T) {
 	Convey("Given empty flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 
 		Convey("When retrieve values from not exists key", func() {
 			v := f.Values("a")
@@ -263,7 +262,7 @@ func TestFlashValues(t *testing.T) {
 
 func TestFlashGet(t *testing.T) {
 	Convey("Given empty flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 
 		Convey("When get not exists key", func() {
 			v := f.Get("a")
@@ -353,7 +352,7 @@ func TestFlashGet(t *testing.T) {
 
 func TestFlashClone(t *testing.T) {
 	Convey("Given not empty flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 		f.Add("a", "1")
 		f.Add("a", "2")
 		f.Add("b", "3")
@@ -387,7 +386,7 @@ func TestFlashClone(t *testing.T) {
 
 func TestFlashCount(t *testing.T) {
 	Convey("Given empty flash", t, func() {
-		f := newFlash()
+		f := new(Flash)
 
 		Convey("Should have 0 count", func() {
 			So(f.Count(), ShouldEqual, 0)

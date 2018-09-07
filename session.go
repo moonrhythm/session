@@ -268,10 +268,11 @@ func (s *Session) Flash() *Flash {
 		return s.flash
 	}
 	if b, ok := s.Get(flashKey).([]byte); ok {
-		s.flash, _ = decodeFlash(b)
+		s.flash = new(Flash)
+		s.flash.decode(b)
 	}
 	if s.flash == nil {
-		s.flash = newFlash()
+		s.flash = &Flash{}
 	}
 	return s.flash
 }
