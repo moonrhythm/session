@@ -5,8 +5,6 @@ import (
 	"net"
 	"net/http"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 type fakeWriter struct{}
@@ -37,7 +35,7 @@ func (*fakeWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 
 func TestWriter(t *testing.T) {
 	// empty response writer
-	w := sessionWriter{}
+	w := scopedManager{}
 	w.Push("", nil)
 	w.Flush()
 	w.CloseNotify()
@@ -48,14 +46,4 @@ func TestWriter(t *testing.T) {
 	w.Flush()
 	w.CloseNotify()
 	w.Hijack()
-
-	called := 0
-	w.beforeWriteHeader = func() {
-		called++
-	}
-	w.WriteHeader(200)
-	w.WriteHeader(200)
-	w.Write([]byte("ok"))
-
-	assert.Equal(t, 1, called)
 }

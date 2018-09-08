@@ -75,9 +75,10 @@ func TestSessionCookie(t *testing.T) {
 	assert.Equal(t, time.Second, setTTL)
 
 	cs := w.Result().Cookies()
-	assert.Len(t, cs, 1, "expected response has 1 cookie; got %d", len(cs))
-	assert.NotEqual(t, setKey, cs[0].Value, "expected session id was hashed")
-	assert.Empty(t, cs[0].MaxAge)
+	if assert.Len(t, cs, 1, "expected response has 1 cookie; got %d", len(cs)) {
+		assert.NotEqual(t, setKey, cs[0].Value, "expected session id was hashed")
+		assert.Empty(t, cs[0].MaxAge)
+	}
 }
 
 func TestEmptySession(t *testing.T) {
@@ -167,8 +168,9 @@ func TestSessionSetInStore(t *testing.T) {
 	assert.Equal(t, time.Second, setTTL)
 
 	cs := w.Result().Cookies()
-	assert.Len(t, cs, 1, "expected response has 1 cookie; got %d", len(cs))
-	assert.NotEqual(t, setKey, cs[0].Value, "expected session id was hashed")
+	if assert.Len(t, cs, 1, "expected response has 1 cookie; got %d", len(cs)) {
+		assert.NotEqual(t, setKey, cs[0].Value, "expected session id was hashed")
+	}
 }
 
 func TestSessionGetSet(t *testing.T) {
@@ -243,8 +245,9 @@ func TestSecureFlag(t *testing.T) {
 		h.ServeHTTP(w, r)
 
 		cs := w.Result().Cookies()
-		assert.Len(t, cs, 1)
-		assert.Equal(t, c.expected, cs[0].Secure)
+		if assert.Len(t, cs, 1) {
+			assert.Equal(t, c.expected, cs[0].Secure)
+		}
 	}
 }
 
@@ -271,8 +274,9 @@ func TestSecureFlagWithoutProxy(t *testing.T) {
 		h.ServeHTTP(w, r)
 
 		cs := w.Result().Cookies()
-		assert.Len(t, cs, 1)
-		assert.Equal(t, c.expected, cs[0].Secure)
+		if assert.Len(t, cs, 1) {
+			assert.Equal(t, c.expected, cs[0].Secure)
+		}
 	}
 }
 
@@ -295,8 +299,9 @@ func TestHttpOnlyFlag(t *testing.T) {
 		h.ServeHTTP(w, r)
 
 		cs := w.Result().Cookies()
-		assert.Len(t, cs, 1)
-		assert.Equal(t, c.flag, cs[0].HttpOnly)
+		if assert.Len(t, cs, 1) {
+			assert.Equal(t, c.flag, cs[0].HttpOnly)
+		}
 	}
 }
 
@@ -321,11 +326,12 @@ func TestSameSiteFlag(t *testing.T) {
 		h.ServeHTTP(w, r)
 
 		cs := w.Result().Cookies()
-		assert.Len(t, cs, 1)
-		if c.flag == 0 {
-			assert.Equal(t, http.SameSite(0), cs[0].SameSite)
-		} else {
-			assert.Equal(t, c.flag, cs[0].SameSite)
+		if assert.Len(t, cs, 1) {
+			if c.flag == 0 {
+				assert.Equal(t, http.SameSite(0), cs[0].SameSite)
+			} else {
+				assert.Equal(t, c.flag, cs[0].SameSite)
+			}
 		}
 	}
 }
@@ -524,14 +530,18 @@ func TestRolling(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	h.ServeHTTP(w, r)
 	time.Sleep(time.Millisecond * 600)
-	oldCookie := w.Result().Cookies()[0].Value
 
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
-	r.Header.Set("Cookie", w.Result().Cookies()[0].String())
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	assert.Len(t, w.Result().Cookies(), 1)
-	assert.Equal(t, oldCookie, w.Result().Cookies()[0].Value)
+	if assert.Len(t, w.Result().Cookies(), 1) {
+		oldCookie := w.Result().Cookies()[0].Value
+
+		r = httptest.NewRequest(http.MethodGet, "/", nil)
+		r.Header.Set("Cookie", w.Result().Cookies()[0].String())
+		w = httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if assert.Len(t, w.Result().Cookies(), 1) {
+			assert.Equal(t, oldCookie, w.Result().Cookies()[0].Value)
+		}
+	}
 }
 
 func TestRollingDisable(t *testing.T) {
@@ -558,11 +568,13 @@ func TestRollingDisable(t *testing.T) {
 	h.ServeHTTP(w, r)
 	time.Sleep(time.Millisecond * 600)
 
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
-	r.Header.Set("Cookie", w.Result().Cookies()[0].String())
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	assert.Len(t, w.Result().Cookies(), 0)
+	if assert.Len(t, w.Result().Cookies(), 1) {
+		r = httptest.NewRequest(http.MethodGet, "/", nil)
+		r.Header.Set("Cookie", w.Result().Cookies()[0].String())
+		w = httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		assert.Len(t, w.Result().Cookies(), 0)
+	}
 }
 
 func TestDestroy(t *testing.T) {
@@ -630,8 +642,9 @@ func TestDisableHashID(t *testing.T) {
 	h.ServeHTTP(w, r)
 
 	cs := w.Result().Cookies()
-	assert.Len(t, cs, 1)
-	assert.Equal(t, setKey, cs[0].Value, "expected session id was not hashed")
+	if assert.Len(t, cs, 1) {
+		assert.Equal(t, setKey, cs[0].Value, "expected session id was not hashed")
+	}
 }
 
 func TestSessionMultipleGet(t *testing.T) {
@@ -784,47 +797,48 @@ func TestSignature(t *testing.T) {
 	h.ServeHTTP(w, r)
 
 	cs := w.Result().Cookies()
-	assert.Len(t, cs, 1)
-	assert.Contains(t, cs[0].Value, ".")
+	if assert.Len(t, cs, 1) {
+		assert.Contains(t, cs[0].Value, ".")
 
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
-	r.AddCookie(cs[0])
-	h.ServeHTTP(w, r)
+		w = httptest.NewRecorder()
+		r = httptest.NewRequest(http.MethodGet, "/", nil)
+		r.AddCookie(cs[0])
+		h.ServeHTTP(w, r)
 
-	h = session.Middleware(session.Config{
-		Keys: [][]byte{
-			[]byte("key2"),
-			[]byte("key1"),
-		},
-		Store:   store,
-		Rolling: true,
-	})(hh)
+		h = session.Middleware(session.Config{
+			Keys: [][]byte{
+				[]byte("key2"),
+				[]byte("key1"),
+			},
+			Store:   store,
+			Rolling: true,
+		})(hh)
 
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
-	r.AddCookie(cs[0])
-	h.ServeHTTP(w, r)
-	cs1 := w.Result().Cookies()
+		w = httptest.NewRecorder()
+		r = httptest.NewRequest(http.MethodGet, "/", nil)
+		r.AddCookie(cs[0])
+		h.ServeHTTP(w, r)
+		cs1 := w.Result().Cookies()
 
-	h = session.Middleware(session.Config{
-		Keys: [][]byte{
-			[]byte("key2"),
-		},
-		Store: store,
-	})(hh)
+		h = session.Middleware(session.Config{
+			Keys: [][]byte{
+				[]byte("key2"),
+			},
+			Store: store,
+		})(hh)
 
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
-	r.AddCookie(cs1[0])
-	h.ServeHTTP(w, r)
+		w = httptest.NewRecorder()
+		r = httptest.NewRequest(http.MethodGet, "/", nil)
+		r.AddCookie(cs1[0])
+		h.ServeHTTP(w, r)
 
-	// invalid signature
-	c = 999
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
-	r.AddCookie(cs[0])
-	h.ServeHTTP(w, r)
+		// invalid signature
+		c = 999
+		w = httptest.NewRecorder()
+		r = httptest.NewRequest(http.MethodGet, "/", nil)
+		r.AddCookie(cs[0])
+		h.ServeHTTP(w, r)
+	}
 }
 
 func TestEmptyBody(t *testing.T) {

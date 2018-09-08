@@ -170,40 +170,9 @@ func (s *Session) PopBool(key string) bool {
 	return r
 }
 
-// Regenerate regenerates session id
-// use when change user access level to prevent session fixation
-//
-// Can use only with middleware
-func (s *Session) Regenerate() error {
-	if s.m == nil {
-		return ErrNotPassMiddleware
-	}
-	return s.m.regenerate(s)
-}
-
 // IsNew checks is new session
 func (s *Session) IsNew() bool {
 	return s.isNew
-}
-
-// Renew clear all data in current session and regenerate session id
-//
-// Can use only with middleware
-func (s *Session) Renew() error {
-	if s.m == nil {
-		return ErrNotPassMiddleware
-	}
-	return s.m.renew(s)
-}
-
-// Destroy destroys session from store
-//
-// Can use only with middleware
-func (s *Session) Destroy() error {
-	if s.m == nil {
-		return ErrNotPassMiddleware
-	}
-	return s.m.destroy(s)
 }
 
 // Flash returns flash from session,
@@ -227,4 +196,37 @@ func (s *Session) Hijacked() bool {
 		}
 	}
 	return false
+}
+
+// with scopedManager
+
+// Regenerate regenerates session id
+// use when change user access level to prevent session fixation
+//
+// Can use only with middleware
+func (s *Session) Regenerate() error {
+	if s.m == nil {
+		return ErrNotPassMiddleware
+	}
+	return s.m.Regenerate(s)
+}
+
+// Renew clear all data in current session and regenerate session id
+//
+// Can use only with middleware
+func (s *Session) Renew() error {
+	if s.m == nil {
+		return ErrNotPassMiddleware
+	}
+	return s.m.Renew(s)
+}
+
+// Destroy destroys session from store
+//
+// Can use only with middleware
+func (s *Session) Destroy() error {
+	if s.m == nil {
+		return ErrNotPassMiddleware
+	}
+	return s.m.Destroy(s)
 }
