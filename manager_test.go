@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/acoshift/session"
+	"github.com/acoshift/session/store/memory"
 )
 
 func TestManagerGetSave(t *testing.T) {
@@ -76,4 +77,34 @@ func TestManagerGetError(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	r.Header.Set("Cookie", sessName+"=test")
 	h(w, r)
+}
+
+func TestManagerNotPassMiddleware(t *testing.T) {
+	m := session.New(session.Config{
+		MaxAge: time.Second,
+		Store:  memory.New(memory.Config{}),
+	})
+
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	t.Run("Regenerate", func(t *testing.T) {
+		s, err := m.Get(r, sessName)
+		if assert.NoError(t, err) {
+			assert.Error(t, s.Regenerate())
+		}
+	})
+
+	t.Run("Renew", func(t *testing.T) {
+		s, err := m.Get(r, sessName)
+		if assert.NoError(t, err) {
+			assert.Error(t, s.Renew())
+		}
+	})
+
+	t.Run("Destroy", func(t *testing.T) {
+		s, err := m.Get(r, sessName)
+		if assert.NoError(t, err) {
+			assert.Error(t, s.Destroy())
+		}
+	})
 }

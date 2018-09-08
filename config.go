@@ -23,7 +23,7 @@ type Config struct {
 	Secure   Secure
 	SameSite http.SameSite
 
-	// IdleTimeout is the ttl for storage
+	// IdleTimeout is the ttl for storage,
 	// if IdleTimeout is zero, it will use MaxAge
 	IdleTimeout time.Duration
 
@@ -43,7 +43,7 @@ type Config struct {
 	// DisablaHashID disables hash session id when save to store
 	DisableHashID bool
 
-	// GenerateID is the generate id function
+	// GenerateID is session id generator
 	GenerateID func() string
 }
 
