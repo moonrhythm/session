@@ -14,6 +14,8 @@ import (
 )
 
 func TestManagerGetSave(t *testing.T) {
+	t.Parallel()
+
 	var (
 		setKey   string
 		setValue session.Data
@@ -58,6 +60,8 @@ func TestManagerGetSave(t *testing.T) {
 }
 
 func TestManagerGetError(t *testing.T) {
+	t.Parallel()
+
 	m := session.New(session.Config{
 		MaxAge: time.Second,
 		Store: &mockStore{
@@ -80,6 +84,8 @@ func TestManagerGetError(t *testing.T) {
 }
 
 func TestManagerNotPassMiddleware(t *testing.T) {
+	t.Parallel()
+
 	m := session.New(session.Config{
 		MaxAge: time.Second,
 		Store:  memory.New(memory.Config{}),

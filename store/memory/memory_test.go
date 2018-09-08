@@ -11,6 +11,8 @@ import (
 )
 
 func TestMemory(t *testing.T) {
+	t.Parallel()
+
 	s := store.New(store.Config{GCInterval: 10 * time.Millisecond})
 
 	opt := session.StoreOption{TTL: time.Millisecond}
@@ -48,6 +50,8 @@ func TestMemory(t *testing.T) {
 }
 
 func TestMemoryWithoutTTL(t *testing.T) {
+	t.Parallel()
+
 	s := store.New(store.Config{GCInterval: 10 * time.Millisecond})
 
 	opt := session.StoreOption{}

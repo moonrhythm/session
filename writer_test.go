@@ -34,6 +34,8 @@ func (*fakeWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 func TestWriter(t *testing.T) {
+	t.Parallel()
+
 	// empty response writer
 	w := scopedManager{}
 	w.Push("", nil)

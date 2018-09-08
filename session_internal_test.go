@@ -7,6 +7,8 @@ import (
 )
 
 func TestSessionOperation(t *testing.T) {
+	t.Parallel()
+
 	s := Session{}
 	assert.Nil(t, s.Get("a"), "expected get data from empty session return nil")
 	assert.Nil(t, s.Pop("a"), "expected pop data from empty session return nil")
@@ -27,6 +29,8 @@ func TestSessionOperation(t *testing.T) {
 }
 
 func TestSessionGetWithTypes(t *testing.T) {
+	t.Parallel()
+
 	s := Session{}
 
 	s.Set("string", "text")
