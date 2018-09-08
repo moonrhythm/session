@@ -98,10 +98,6 @@ func (m *scopedManager) MustSaveAll() {
 	}
 }
 
-func (m *scopedManager) Destroy(s *Session) error {
-	return m.Manager.Destroy(m.ResponseWriter, s)
-}
-
 func (m *scopedManager) Regenerate(s *Session) error {
 	return m.Manager.Regenerate(m.ResponseWriter, s)
 }
