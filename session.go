@@ -212,56 +212,6 @@ func (s *Session) Destroy() {
 	s.destroy = true
 }
 
-func (s *Session) setCookie(w http.ResponseWriter) {
-	if s.destroy {
-		http.SetCookie(w, &http.Cookie{
-			Name:     s.Name,
-			Domain:   s.Domain,
-			Path:     s.Path,
-			HttpOnly: s.HTTPOnly,
-			Value:    "",
-			MaxAge:   -1,
-			Expires:  time.Unix(0, 0),
-			Secure:   s.Secure,
-		})
-		return
-	}
-
-	// if session don't have raw id, don't set cookie
-	if len(s.rawID) == 0 {
-		return
-	}
-
-	if s.isNew && !s.Changed() {
-		return
-	}
-	if !s.Rolling && (!s.isNew || !s.Changed()) {
-		return
-	}
-
-	value := s.rawID
-	if len(s.manager.config.Keys) > 0 {
-		digest := sign(value, s.manager.config.Keys[0])
-		value += "." + digest
-	}
-
-	cs := http.Cookie{
-		Name:     s.Name,
-		Domain:   s.Domain,
-		Path:     s.Path,
-		HttpOnly: s.HTTPOnly,
-		Value:    value,
-		Secure:   s.Secure,
-		SameSite: s.SameSite,
-	}
-	if s.MaxAge > 0 {
-		cs.MaxAge = int(s.MaxAge / time.Second)
-		cs.Expires = time.Now().Add(s.MaxAge)
-	}
-
-	http.SetCookie(w, &cs)
-}
-
 // Flash returns flash from session,
 func (s *Session) Flash() *Flash {
 	if s.flash != nil {

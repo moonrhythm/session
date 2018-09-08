@@ -116,7 +116,7 @@ invalidSignature:
 //
 // Save must be called before response header was written
 func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
-	s.setCookie(w)
+	m.setCookie(w, s)
 
 	opt := makeStoreOption(m, s)
 
@@ -156,6 +156,56 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	// save sesion data to store
 	s.Set(timestampKey, time.Now().Unix())
 	return m.config.Store.Set(s.id, s.data, opt)
+}
+
+func (m *Manager) setCookie(w http.ResponseWriter, s *Session) {
+	if s.destroy {
+		http.SetCookie(w, &http.Cookie{
+			Name:     s.Name,
+			Domain:   s.Domain,
+			Path:     s.Path,
+			HttpOnly: s.HTTPOnly,
+			Value:    "",
+			MaxAge:   -1,
+			Expires:  time.Unix(0, 0),
+			Secure:   s.Secure,
+		})
+		return
+	}
+
+	// if session don't have raw id, don't set cookie
+	if len(s.rawID) == 0 {
+		return
+	}
+
+	if s.isNew && !s.Changed() {
+		return
+	}
+	if !s.Rolling && (!s.isNew || !s.Changed()) {
+		return
+	}
+
+	value := s.rawID
+	if len(m.config.Keys) > 0 {
+		digest := sign(value, m.config.Keys[0])
+		value += "." + digest
+	}
+
+	cs := http.Cookie{
+		Name:     s.Name,
+		Domain:   s.Domain,
+		Path:     s.Path,
+		HttpOnly: s.HTTPOnly,
+		Value:    value,
+		Secure:   s.Secure,
+		SameSite: s.SameSite,
+	}
+	if s.MaxAge > 0 {
+		cs.MaxAge = int(s.MaxAge / time.Second)
+		cs.Expires = time.Now().Add(s.MaxAge)
+	}
+
+	http.SetCookie(w, &cs)
 }
 
 func (m *Manager) isSecure(r *http.Request) bool {
