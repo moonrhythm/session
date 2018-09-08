@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/acoshift/session"
+	"github.com/moonrhythm/session"
 )
 
 // Config is the memory store config

@@ -7,8 +7,8 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/acoshift/session"
-	store "github.com/acoshift/session/store/goredis"
+	"github.com/moonrhythm/session"
+	store "github.com/moonrhythm/session/store/goredis"
 )
 
 func TestRedis(t *testing.T) {

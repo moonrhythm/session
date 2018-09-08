@@ -8,11 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/acoshift/middleware"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/acoshift/session"
-	"github.com/acoshift/session/store/memory"
+	"github.com/moonrhythm/session"
+	"github.com/moonrhythm/session/store/memory"
 )
 
 const sessName = "sess"
@@ -717,9 +716,10 @@ func TestFlash(t *testing.T) {
 	t.Parallel()
 
 	i := 0
-	h := middleware.Chain(
-		session.Middleware(session.Config{Store: memory.New(memory.Config{}), MaxAge: time.Minute}),
-	)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := session.Middleware(session.Config{
+		Store:  memory.New(memory.Config{}),
+		MaxAge: time.Minute,
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s, _ := session.Get(r.Context(), "sess")
 		if i == 0 {
 			s.Flash().Set("a", "1")

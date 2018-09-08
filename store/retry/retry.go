@@ -1,7 +1,7 @@
 package retry
 
 import (
-	"github.com/acoshift/session"
+	"github.com/moonrhythm/session"
 )
 
 // New creates new retry store

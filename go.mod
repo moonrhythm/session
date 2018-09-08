@@ -1,1 +1,1 @@
-module github.com/acoshift/session
+module github.com/moonrhythm/session
