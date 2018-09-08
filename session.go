@@ -10,12 +10,9 @@ type Data map[string]interface{}
 
 // Session type
 type Session struct {
-	id      string // id is the hashed id if enable hash
+	id      string // id is the hashed id if hash enabled
 	rawID   string
-	oldID   string // for regenerate, is the hashed old id if enable hash
-	oldData Data   // is the old data before regenerate
 	data    Data
-	destroy bool
 	changed bool
 	isNew   bool
 	flash   *Flash
@@ -30,7 +27,7 @@ type Session struct {
 	SameSite http.SameSite
 	Rolling  bool
 
-	manager *Manager
+	m *scopedManager
 }
 
 // Clone clones session data
@@ -176,23 +173,12 @@ func (s *Session) PopBool(key string) bool {
 // Regenerate regenerates session id
 // use when change user access level to prevent session fixation
 //
-// can not use regenerate and destroy same time
-// Regenerate can call only one time
-func (s *Session) Regenerate() {
-	if len(s.oldID) > 0 {
-		return
+// Can use only with middleware
+func (s *Session) Regenerate() error {
+	if s.m == nil {
+		return ErrNotPassMiddleware
 	}
-
-	if s.destroy {
-		return
-	}
-
-	s.oldID = s.id
-	s.oldData = s.data.Clone()
-	s.rawID = s.manager.config.GenerateID()
-	s.isNew = true
-	s.id = s.manager.hashID(s.rawID)
-	s.changed = true
+	return s.m.regenerate(s)
 }
 
 // IsNew checks is new session
@@ -200,16 +186,24 @@ func (s *Session) IsNew() bool {
 	return s.isNew
 }
 
-// Renew clear all data in current session
-// and regenerate session id
-func (s *Session) Renew() {
-	s.data = make(Data)
-	s.Regenerate()
+// Renew clear all data in current session and regenerate session id
+//
+// Can use only with middleware
+func (s *Session) Renew() error {
+	if s.m == nil {
+		return ErrNotPassMiddleware
+	}
+	return s.m.renew(s)
 }
 
 // Destroy destroys session from store
-func (s *Session) Destroy() {
-	s.destroy = true
+//
+// Can use only with middleware
+func (s *Session) Destroy() error {
+	if s.m == nil {
+		return ErrNotPassMiddleware
+	}
+	return s.m.destroy(s)
 }
 
 // Flash returns flash from session,
@@ -217,6 +211,7 @@ func (s *Session) Flash() *Flash {
 	if s.flash != nil {
 		return s.flash
 	}
+
 	s.flash = new(Flash)
 	if b, ok := s.Get(flashKey).([]byte); ok {
 		s.flash.decode(b)
@@ -224,8 +219,7 @@ func (s *Session) Flash() *Flash {
 	return s.flash
 }
 
-// Hijacked checks is session was hijacked,
-// can use only with Manager
+// Hijacked checks is session was hijacked
 func (s *Session) Hijacked() bool {
 	if t, ok := s.Get(destroyedKey).(int64); ok {
 		if t < time.Now().UnixNano()-int64(HijackedTime) {

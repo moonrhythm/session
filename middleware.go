@@ -11,8 +11,6 @@ var (
 	ErrNotPassMiddleware = errors.New("session: request not pass middleware")
 )
 
-type managerKey struct{}
-
 // Middleware is the Manager middleware wrapper
 //
 // New(config).Middleware()
@@ -26,13 +24,14 @@ func Middleware(config Config) func(http.Handler) http.Handler {
 func (m *Manager) Middleware() func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			rm := requestedManager{
+			rm := scopedManager{
 				Manager: m,
+				w:       w,
 				r:       r,
 				storage: make(map[string]*Session),
 			}
 
-			ctx := context.WithValue(r.Context(), managerKey{}, &rm)
+			ctx := context.WithValue(r.Context(), scopedManagerKey{}, &rm)
 			nr := r.WithContext(ctx)
 			nw := sessionWriter{
 				ResponseWriter: w,
@@ -56,7 +55,7 @@ func (m *Manager) Middleware() func(http.Handler) http.Handler {
 
 // Get gets session from context
 func Get(ctx context.Context, name string) (*Session, error) {
-	m, _ := ctx.Value(managerKey{}).(*requestedManager)
+	m, _ := ctx.Value(scopedManagerKey{}).(*scopedManager)
 	if m == nil {
 		return nil, ErrNotPassMiddleware
 	}
@@ -72,18 +71,34 @@ func Get(ctx context.Context, name string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.m = m
 
 	// save session to storage for later get
 	m.storage[name] = s
 	return s, nil
 }
 
-type requestedManager struct {
+type scopedManagerKey struct{}
+
+type scopedManager struct {
 	*Manager
+	w       http.ResponseWriter
 	r       *http.Request
 	storage map[string]*Session
 }
 
-func (m *requestedManager) Get(name string) (*Session, error) {
+func (m *scopedManager) Get(name string) (*Session, error) {
 	return m.Manager.Get(m.r, name)
+}
+
+func (m *scopedManager) destroy(s *Session) error {
+	return m.Manager.Destroy(m.w, s)
+}
+
+func (m *scopedManager) regenerate(s *Session) error {
+	return m.Manager.Regenerate(m.w, s)
+}
+
+func (m *scopedManager) renew(s *Session) error {
+	return m.Manager.Renew(m.w, s)
 }

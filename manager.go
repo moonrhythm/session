@@ -59,7 +59,6 @@ func New(config Config) *Manager {
 // Get retrieves session from request
 func (m *Manager) Get(r *http.Request, name string) (*Session, error) {
 	s := Session{
-		manager:  m,
 		Name:     name,
 		Domain:   m.config.Domain,
 		Path:     m.config.Path,
@@ -120,10 +119,6 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 	opt := makeStoreOption(m, s)
 
-	if s.destroy {
-		return m.config.Store.Del(s.id, opt)
-	}
-
 	// detect is flash changed and encode new flash data
 	if s.flash != nil && s.flash.Changed() {
 		b, _ := s.flash.encode()
@@ -135,44 +130,56 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 		return nil
 	}
 
-	// check is regenerate
-	if len(s.oldID) > 0 {
-		if m.config.DeleteOldSession {
-			err := m.config.Store.Del(s.oldID, opt)
-			if err != nil {
-				return err
-			}
-		} else {
-			// save old session data if not delete
-			s.oldData[timestampKey] = int64(0)
-			s.oldData[destroyedKey] = time.Now().UnixNano()
-			err := m.config.Store.Set(s.oldID, s.oldData, opt)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	// save sesion data to store
 	s.Set(timestampKey, time.Now().Unix())
 	return m.config.Store.Set(s.id, s.data, opt)
 }
 
-func (m *Manager) setCookie(w http.ResponseWriter, s *Session) {
-	if s.destroy {
-		http.SetCookie(w, &http.Cookie{
-			Name:     s.Name,
-			Domain:   s.Domain,
-			Path:     s.Path,
-			HttpOnly: s.HTTPOnly,
-			Value:    "",
-			MaxAge:   -1,
-			Expires:  time.Unix(0, 0),
-			Secure:   s.Secure,
-		})
-		return
+// Destroy deletes session from store
+func (m *Manager) Destroy(w http.ResponseWriter, s *Session) error {
+	http.SetCookie(w, &http.Cookie{
+		Name:     s.Name,
+		Domain:   s.Domain,
+		Path:     s.Path,
+		HttpOnly: s.HTTPOnly,
+		Value:    "",
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+		Secure:   s.Secure,
+	})
+
+	return m.config.Store.Del(s.id, makeStoreOption(m, s))
+}
+
+// Regenerate regenerates session id
+// use when change user access level to prevent session fixation
+func (m *Manager) Regenerate(w http.ResponseWriter, s *Session) error {
+	opt := makeStoreOption(m, s)
+
+	id := s.id
+
+	s.rawID = m.config.GenerateID()
+	s.isNew = true
+	s.id = m.hashID(s.rawID)
+	s.changed = true
+
+	if m.config.DeleteOldSession {
+		return m.config.Store.Del(id, opt)
 	}
 
+	data := s.data.Clone()
+	data[timestampKey] = int64(0)
+	data[destroyedKey] = time.Now().UnixNano()
+	return m.config.Store.Set(id, data, opt)
+}
+
+// Renew clears session data and regenerate new session id
+func (m *Manager) Renew(w http.ResponseWriter, s *Session) error {
+	s.data = make(Data)
+	return m.Regenerate(w, s)
+}
+
+func (m *Manager) setCookie(w http.ResponseWriter, s *Session) {
 	// if session don't have raw id, don't set cookie
 	if len(s.rawID) == 0 {
 		return

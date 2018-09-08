@@ -365,13 +365,10 @@ func TestRegenerate(t *testing.T) {
 		} else if c == 1 {
 			s.Set("test", 2)
 
-			// test regenerate multiple time should do nothing
 			oldID := s.ID()
 			s.Regenerate()
 			newID := s.ID()
 			assert.NotEqual(t, oldID, newID)
-			s.Regenerate()
-			assert.Equal(t, newID, s.ID())
 
 			s.Set("test", 3)
 			c = 2
@@ -541,7 +538,7 @@ func TestRollingDisable(t *testing.T) {
 	c := 0
 
 	h := session.Middleware(session.Config{
-		MaxAge:  time.Second,
+		MaxAge:  5 * time.Second,
 		Rolling: false,
 		Store:   memory.New(memory.Config{}),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
