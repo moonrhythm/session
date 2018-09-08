@@ -1,7 +1,7 @@
 package session_test
 
 import (
-	"github.com/acoshift/session"
+	"github.com/moonrhythm/session"
 )
 
 type mockStore struct {

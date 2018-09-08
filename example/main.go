@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/acoshift/session"
-	"github.com/acoshift/session/store/memory"
+	"github.com/moonrhythm/session"
+	"github.com/moonrhythm/session/store/memory"
 )
 
 func main() {

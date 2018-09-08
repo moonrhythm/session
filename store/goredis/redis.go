@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-redis/redis"
 
-	"github.com/acoshift/session"
+	"github.com/moonrhythm/session"
 )
 
 // Config is the redis store config

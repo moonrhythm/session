@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/acoshift/session"
-	store "github.com/acoshift/session/store/memory"
+	"github.com/moonrhythm/session"
+	store "github.com/moonrhythm/session/store/memory"
 
 	"github.com/stretchr/testify/assert"
 )

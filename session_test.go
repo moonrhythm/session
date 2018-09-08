@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/acoshift/session"
+	"github.com/moonrhythm/session"
 )
 
 func TestSessionRenew(t *testing.T) {

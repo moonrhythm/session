@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/acoshift/session"
-	"github.com/acoshift/session/store/retry"
+	"github.com/moonrhythm/session"
+	"github.com/moonrhythm/session/store/retry"
 	"github.com/stretchr/testify/assert"
 )
 
