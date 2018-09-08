@@ -26,6 +26,8 @@ func mockHandlerFunc(w http.ResponseWriter, r *http.Request) {
 var mockHandler = http.HandlerFunc(mockHandlerFunc)
 
 func TestPanicConfig(t *testing.T) {
+	t.Parallel()
+
 	defer func() {
 		err := recover()
 		assert.NotNil(t, err, "expected panic when misconfig")
@@ -34,6 +36,8 @@ func TestPanicConfig(t *testing.T) {
 }
 
 func TestDefaultConfig(t *testing.T) {
+	t.Parallel()
+
 	h := session.Middleware(session.Config{
 		Store: &mockStore{},
 	})(mockHandler)
@@ -46,6 +50,8 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestSessionCookie(t *testing.T) {
+	t.Parallel()
+
 	var (
 		setCalled bool
 		setKey    string
@@ -82,6 +88,8 @@ func TestSessionCookie(t *testing.T) {
 }
 
 func TestEmptySession(t *testing.T) {
+	t.Parallel()
+
 	h := session.Middleware(session.Config{
 		Store: &mockStore{
 			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
@@ -109,6 +117,8 @@ func TestEmptySession(t *testing.T) {
 }
 
 func TestEmptySessionFlash(t *testing.T) {
+	t.Parallel()
+
 	h := session.Middleware(session.Config{
 		Store: &mockStore{
 			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
@@ -139,6 +149,8 @@ func TestEmptySessionFlash(t *testing.T) {
 }
 
 func TestSessionSetInStore(t *testing.T) {
+	t.Parallel()
+
 	var (
 		setCalled bool
 		setKey    string
@@ -174,6 +186,8 @@ func TestSessionSetInStore(t *testing.T) {
 }
 
 func TestSessionGetSet(t *testing.T) {
+	t.Parallel()
+
 	var (
 		setCalled int
 		setKey    string
@@ -217,6 +231,8 @@ func TestSessionGetSet(t *testing.T) {
 }
 
 func TestSecureFlag(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		tls      bool
 		flag     session.Secure
@@ -252,6 +268,8 @@ func TestSecureFlag(t *testing.T) {
 }
 
 func TestSecureFlagWithoutProxy(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		flag     session.Secure
 		expected bool
@@ -281,6 +299,8 @@ func TestSecureFlagWithoutProxy(t *testing.T) {
 }
 
 func TestHttpOnlyFlag(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		flag bool
 	}{
@@ -306,6 +326,8 @@ func TestHttpOnlyFlag(t *testing.T) {
 }
 
 func TestSameSiteFlag(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		flag http.SameSite
 	}{
@@ -337,6 +359,8 @@ func TestSameSiteFlag(t *testing.T) {
 }
 
 func TestRegenerate(t *testing.T) {
+	t.Parallel()
+
 	c := 0
 
 	var (
@@ -411,6 +435,8 @@ func TestRegenerate(t *testing.T) {
 }
 
 func TestRegenerateDeleteOldSession(t *testing.T) {
+	t.Parallel()
+
 	c := 0
 	setValue := make(map[string]session.Data)
 
@@ -472,6 +498,8 @@ func TestRegenerateDeleteOldSession(t *testing.T) {
 }
 
 func TestResave(t *testing.T) {
+	t.Parallel()
+
 	setCalled := 0
 	setValue := make(map[string]session.Data)
 
@@ -509,6 +537,8 @@ func TestResave(t *testing.T) {
 }
 
 func TestRolling(t *testing.T) {
+	t.Parallel()
+
 	c := 0
 
 	h := session.Middleware(session.Config{
@@ -545,6 +575,8 @@ func TestRolling(t *testing.T) {
 }
 
 func TestRollingDisable(t *testing.T) {
+	t.Parallel()
+
 	c := 0
 
 	h := session.Middleware(session.Config{
@@ -578,6 +610,8 @@ func TestRollingDisable(t *testing.T) {
 }
 
 func TestDestroy(t *testing.T) {
+	t.Parallel()
+
 	c := 0
 
 	var (
@@ -625,6 +659,8 @@ func TestDestroy(t *testing.T) {
 }
 
 func TestDisableHashID(t *testing.T) {
+	t.Parallel()
+
 	var setKey string
 
 	h := session.Middleware(session.Config{
@@ -648,6 +684,8 @@ func TestDisableHashID(t *testing.T) {
 }
 
 func TestSessionMultipleGet(t *testing.T) {
+	t.Parallel()
+
 	h := session.Middleware(session.Config{
 		Store: &mockStore{},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -664,6 +702,8 @@ func TestSessionMultipleGet(t *testing.T) {
 }
 
 func TestEmptyContext(t *testing.T) {
+	t.Parallel()
+
 	defer func() {
 		r := recover()
 		assert.Nil(t, r, "expected get session from empty context must not panic")
@@ -674,6 +714,8 @@ func TestEmptyContext(t *testing.T) {
 }
 
 func TestFlash(t *testing.T) {
+	t.Parallel()
+
 	i := 0
 	h := middleware.Chain(
 		session.Middleware(session.Config{Store: memory.New(memory.Config{}), MaxAge: time.Minute}),
@@ -703,6 +745,8 @@ func TestFlash(t *testing.T) {
 }
 
 func TestHijack(t *testing.T) {
+	t.Parallel()
+
 	session.HijackedTime = 5 * time.Millisecond
 
 	c := 0
@@ -768,6 +812,8 @@ func TestHijack(t *testing.T) {
 }
 
 func TestSignature(t *testing.T) {
+	t.Parallel()
+
 	c := 0
 
 	store := memory.New(memory.Config{})
@@ -842,6 +888,8 @@ func TestSignature(t *testing.T) {
 }
 
 func TestEmptyBody(t *testing.T) {
+	t.Parallel()
+
 	h := session.Middleware(session.Config{
 		Store: memory.New(memory.Config{}),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

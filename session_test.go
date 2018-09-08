@@ -11,6 +11,8 @@ import (
 )
 
 func TestSessionRenew(t *testing.T) {
+	t.Parallel()
+
 	h := session.Middleware(session.Config{
 		Store: &mockStore{},
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
