@@ -137,17 +137,6 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 // Destroy deletes session from store
 func (m *Manager) Destroy(w http.ResponseWriter, s *Session) error {
-	http.SetCookie(w, &http.Cookie{
-		Name:     s.Name,
-		Domain:   s.Domain,
-		Path:     s.Path,
-		HttpOnly: s.HTTPOnly,
-		Value:    "",
-		MaxAge:   -1,
-		Expires:  time.Unix(0, 0),
-		Secure:   s.Secure,
-	})
-
 	return m.config.Store.Del(s.id, makeStoreOption(m, s))
 }
 
