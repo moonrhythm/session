@@ -136,7 +136,7 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 }
 
 // Destroy deletes session from store
-func (m *Manager) Destroy(w http.ResponseWriter, s *Session) error {
+func (m *Manager) Destroy(s *Session) error {
 	return m.config.Store.Del(s.id, makeStoreOption(m, s))
 }
 
