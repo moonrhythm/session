@@ -2,7 +2,6 @@ package memory
 
 import (
 	"bytes"
-	"encoding/gob"
 	"sync"
 	"time"
 
@@ -12,13 +11,18 @@ import (
 // Config is the memory store config
 type Config struct {
 	GCInterval time.Duration
+	Coder      session.StoreCoder
 }
 
 // New creates new memory store
 func New(config Config) session.Store {
+	if config.Coder == nil {
+		config.Coder = session.DefaultStoreCoder
+	}
 	s := &memoryStore{
 		gcInterval: config.GCInterval,
 		l:          make(map[interface{}]*item),
+		coder:      config.Coder,
 	}
 	if s.gcInterval > 0 {
 		time.AfterFunc(s.gcInterval, s.gcWorker)
@@ -35,6 +39,7 @@ type memoryStore struct {
 	gcInterval time.Duration
 	m          sync.RWMutex
 	l          map[interface{}]*item
+	coder      session.StoreCoder
 }
 
 func (s *memoryStore) gcWorker() {
@@ -64,7 +69,7 @@ func (s *memoryStore) Get(key string, opt session.StoreOption) (session.Data, er
 		return nil, session.ErrNotFound
 	}
 	var sessData session.Data
-	err := gob.NewDecoder(bytes.NewReader(v.data)).Decode(&sessData)
+	err := s.coder.NewDecoder(bytes.NewReader(v.data)).Decode(&sessData)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +81,7 @@ func (s *memoryStore) Get(key string, opt session.StoreOption) (session.Data, er
 
 func (s *memoryStore) Set(key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(value)
+	err := s.coder.NewEncoder(&buf).Encode(value)
 	if err != nil {
 		return err
 	}
