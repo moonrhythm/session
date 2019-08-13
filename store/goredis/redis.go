@@ -2,7 +2,6 @@ package goredis
 
 import (
 	"bytes"
-	"encoding/gob"
 
 	"github.com/go-redis/redis"
 
@@ -13,19 +12,25 @@ import (
 type Config struct {
 	Client *redis.Client
 	Prefix string
+	Coder  session.StoreCoder
 }
 
 // New creates new redis store
 func New(config Config) session.Store {
+	if config.Coder == nil {
+		config.Coder = session.DefaultStoreCoder
+	}
 	return &redisStore{
 		client: config.Client,
 		prefix: config.Prefix,
+		coder:  config.Coder,
 	}
 }
 
 type redisStore struct {
 	client *redis.Client
 	prefix string
+	coder  session.StoreCoder
 }
 
 func (s *redisStore) Get(key string, opt session.StoreOption) (session.Data, error) {
@@ -41,7 +46,7 @@ func (s *redisStore) Get(key string, opt session.StoreOption) (session.Data, err
 	}
 
 	var sessData session.Data
-	err = gob.NewDecoder(bytes.NewReader(data)).Decode(&sessData)
+	err = s.coder.NewDecoder(bytes.NewReader(data)).Decode(&sessData)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +55,7 @@ func (s *redisStore) Get(key string, opt session.StoreOption) (session.Data, err
 
 func (s *redisStore) Set(key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(value)
+	err := s.coder.NewEncoder(&buf).Encode(value)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,9 @@
 package session
 
 import (
+	"encoding/gob"
 	"errors"
+	"io"
 	"time"
 )
 
@@ -30,4 +32,33 @@ func makeStoreOption(m *Manager, s *Session) StoreOption {
 		Rolling: s.Rolling,
 		TTL:     m.config.IdleTimeout,
 	}
+}
+
+// StoreCoder interface
+type StoreCoder interface {
+	NewEncoder(w io.Writer) StoreEncoder
+	NewDecoder(r io.Reader) StoreDecoder
+}
+
+// StoreEncoder interface
+type StoreEncoder interface {
+	Encode(e interface{}) error
+}
+
+// StoreDecoder interface
+type StoreDecoder interface {
+	Decode(e interface{}) error
+}
+
+// DefaultStoreCoder is the default store coder
+var DefaultStoreCoder StoreCoder = defaultStoreCoder{}
+
+type defaultStoreCoder struct{}
+
+func (defaultStoreCoder) NewEncoder(w io.Writer) StoreEncoder {
+	return gob.NewEncoder(w)
+}
+
+func (defaultStoreCoder) NewDecoder(r io.Reader) StoreDecoder {
+	return gob.NewDecoder(r)
 }
