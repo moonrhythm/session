@@ -13,7 +13,7 @@ type mockStore struct {
 	attempt int
 }
 
-func (s *mockStore) Get(key string, opt session.StoreOption) (session.Data, error) {
+func (s *mockStore) Get(key string) (session.Data, error) {
 	s.attempt++
 	if s.attempt == 3 {
 		return nil, nil
@@ -29,7 +29,7 @@ func (s *mockStore) Set(key string, value session.Data, opt session.StoreOption)
 	return fmt.Errorf("error")
 }
 
-func (s *mockStore) Del(key string, opt session.StoreOption) error {
+func (s *mockStore) Del(key string) error {
 	s.attempt++
 	if s.attempt == 3 {
 		return nil
@@ -40,7 +40,7 @@ func (s *mockStore) Del(key string, opt session.StoreOption) error {
 func TestRetrySuccess(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
-		_, err := s.Get("", session.StoreOption{})
+		_, err := s.Get("")
 		assert.NoError(t, err)
 	})
 
@@ -52,7 +52,7 @@ func TestRetrySuccess(t *testing.T) {
 
 	t.Run("Del", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
-		err := s.Del("", session.StoreOption{})
+		err := s.Del("")
 		assert.NoError(t, err)
 	})
 }
@@ -60,7 +60,7 @@ func TestRetrySuccess(t *testing.T) {
 func TestRetryFail(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}
-		_, err := s.Get("", session.StoreOption{})
+		_, err := s.Get("")
 		assert.Error(t, err)
 	})
 
@@ -72,7 +72,7 @@ func TestRetryFail(t *testing.T) {
 
 	t.Run("Del", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}
-		err := s.Del("", session.StoreOption{})
+		err := s.Del("")
 		assert.Error(t, err)
 	})
 }

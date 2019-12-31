@@ -24,11 +24,8 @@ func (s *GoRedis) coder() session.StoreCoder {
 }
 
 // Get gets session data from redis
-func (s *GoRedis) Get(key string, opt session.StoreOption) (session.Data, error) {
+func (s *GoRedis) Get(key string) (session.Data, error) {
 	data, err := s.Client.Get(s.Prefix + key).Bytes()
-	if opt.Rolling && opt.TTL > 0 {
-		s.Client.Expire(s.Prefix+key, opt.TTL)
-	}
 	if err == redis.Nil {
 		return nil, session.ErrNotFound
 	}
@@ -55,6 +52,6 @@ func (s *GoRedis) Set(key string, value session.Data, opt session.StoreOption) e
 }
 
 // Del deletes session data from redis
-func (s *GoRedis) Del(key string, opt session.StoreOption) error {
+func (s *GoRedis) Del(key string) error {
 	return s.Client.Del(s.Prefix + key).Err()
 }

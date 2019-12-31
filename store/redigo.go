@@ -25,12 +25,9 @@ func (s *Redigo) coder() session.StoreCoder {
 }
 
 // Get gets session data from redis
-func (s *Redigo) Get(key string, opt session.StoreOption) (session.Data, error) {
+func (s *Redigo) Get(key string) (session.Data, error) {
 	c := s.Pool.Get()
 	data, err := redis.Bytes(c.Do("GET", s.Prefix+key))
-	if opt.Rolling && opt.TTL > 0 {
-		c.Do("EXPIRE", s.Prefix+key, int64(opt.TTL/time.Second))
-	}
 	c.Close()
 	if err == redis.ErrNil {
 		return nil, session.ErrNotFound
@@ -66,7 +63,7 @@ func (s *Redigo) Set(key string, value session.Data, opt session.StoreOption) er
 }
 
 // Del deletes session data from redis
-func (s *Redigo) Del(key string, opt session.StoreOption) error {
+func (s *Redigo) Del(key string) error {
 	c := s.Pool.Get()
 	_, err := c.Do("DEL", s.Prefix+key)
 	c.Close()

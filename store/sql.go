@@ -58,20 +58,13 @@ func (s *SQL) GeneratePostgreSQLStatement(table string, initSchema bool) *SQL {
 }
 
 // Get gets session data from sql db
-func (s *SQL) Get(key string, opt session.StoreOption) (session.Data, error) {
+func (s *SQL) Get(key string) (session.Data, error) {
 	var b []byte
 	err := s.DB.QueryRow(s.GetStatement, key).Scan(&b)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, session.ErrNotFound
 	}
-
-	d := s.decode(b)
-
-	if opt.Rolling {
-		s.Set(key, d, opt)
-	}
-
-	return d, nil
+	return s.decode(b), nil
 }
 
 // Set sets session data to sql db
@@ -88,7 +81,7 @@ func (s *SQL) Set(key string, value session.Data, opt session.StoreOption) error
 }
 
 // Del deletes session data from sql db
-func (s *SQL) Del(key string, opt session.StoreOption) error {
+func (s *SQL) Del(key string) error {
 	_, err := s.DB.Exec(s.DelStatement, key)
 	return err
 }
