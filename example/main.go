@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/moonrhythm/session"
-	"github.com/moonrhythm/session/store/memory"
+	"github.com/moonrhythm/session/store"
 )
 
 func main() {
 	h := session.New(session.Config{
-		Store:    memory.New(memory.Config{}),
+		Store:    new(store.Memory),
 		HTTPOnly: true,
 		Secret:   []byte("supersalt"),
 		Keys:     [][]byte{[]byte("supersecret")},
@@ -26,6 +26,11 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
 	sess, _ := session.Get(r.Context(), "sess")
 	cnt := sess.GetInt("cnt")
 	cnt++

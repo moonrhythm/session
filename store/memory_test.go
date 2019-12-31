@@ -1,19 +1,18 @@
-package memory_test
+package store
 
 import (
 	"testing"
 	"time"
 
-	"github.com/moonrhythm/session"
-	store "github.com/moonrhythm/session/store/memory"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moonrhythm/session"
 )
 
 func TestMemory(t *testing.T) {
 	t.Parallel()
 
-	s := store.New(store.Config{GCInterval: 10 * time.Millisecond})
+	s := new(Memory).GCEvery(10 * time.Millisecond)
 
 	opt := session.StoreOption{TTL: time.Millisecond}
 
@@ -52,7 +51,7 @@ func TestMemory(t *testing.T) {
 func TestMemoryWithoutTTL(t *testing.T) {
 	t.Parallel()
 
-	s := store.New(store.Config{GCInterval: 10 * time.Millisecond})
+	s := new(Memory).GCEvery(10 * time.Millisecond)
 
 	opt := session.StoreOption{}
 

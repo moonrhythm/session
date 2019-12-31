@@ -1,12 +1,12 @@
-package retry_test
+package store
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/moonrhythm/session"
-	"github.com/moonrhythm/session/store/retry"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/moonrhythm/session"
 )
 
 type mockStore struct {
@@ -39,19 +39,19 @@ func (s *mockStore) Del(key string, opt session.StoreOption) error {
 
 func TestRetrySuccess(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
-		s := retry.New(&mockStore{}, 0)
+		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
 		_, err := s.Get("", session.StoreOption{})
 		assert.NoError(t, err)
 	})
 
 	t.Run("Set", func(t *testing.T) {
-		s := retry.New(&mockStore{}, 0)
+		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
 		err := s.Set("", session.Data{}, session.StoreOption{})
 		assert.NoError(t, err)
 	})
 
 	t.Run("Del", func(t *testing.T) {
-		s := retry.New(&mockStore{}, 0)
+		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
 		err := s.Del("", session.StoreOption{})
 		assert.NoError(t, err)
 	})
@@ -59,19 +59,19 @@ func TestRetrySuccess(t *testing.T) {
 
 func TestRetryFail(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
-		s := retry.New(&mockStore{}, 1)
+		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}
 		_, err := s.Get("", session.StoreOption{})
 		assert.Error(t, err)
 	})
 
 	t.Run("Set", func(t *testing.T) {
-		s := retry.New(&mockStore{}, 1)
+		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}
 		err := s.Set("", session.Data{}, session.StoreOption{})
 		assert.Error(t, err)
 	})
 
 	t.Run("Del", func(t *testing.T) {
-		s := retry.New(&mockStore{}, 1)
+		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}
 		err := s.Del("", session.StoreOption{})
 		assert.Error(t, err)
 	})

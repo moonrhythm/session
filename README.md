@@ -50,7 +50,7 @@ func main() {
         MaxAge:   time.Minute,
         Path:     "/",
         Secure:   session.PreferSecure,
-        Store:    store.New(store.Config{}),
+        Store:    new(store.Memory),
     })(mux)
     // equals to
     // h := session.New(session.Config{...}).Middleware()(mux)
@@ -85,7 +85,7 @@ func main() {
         MaxAge:   time.Minute,
         Path:     "/",
         Secure:   session.PreferSecure,
-        Store:    store.New(store.Config{}),
+        Store:    new(store.Memory),
     })
 
     mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
