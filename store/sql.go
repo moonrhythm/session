@@ -13,7 +13,8 @@ import (
 
 // SQL is the sql store
 type SQL struct {
-	DB *sql.DB
+	DB    *sql.DB
+	Coder session.StoreCoder
 
 	SetStatement string
 	GetStatement string
@@ -40,6 +41,13 @@ set value = excluded.value,
 	pgsqlGC  = `delete from %s where expires_at <= now()`
 )
 
+func (s *SQL) coder() session.StoreCoder {
+	if s.Coder == nil {
+		return session.DefaultStoreCoder
+	}
+	return s.Coder
+}
+
 // GeneratePostgrSQLStatement generates postgresql statement
 func (s *SQL) GeneratePostgreSQLStatement(table string, initSchema bool) *SQL {
 	if initSchema {
@@ -64,11 +72,23 @@ func (s *SQL) Get(key string) (session.Data, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, session.ErrNotFound
 	}
-	return s.decode(b), nil
+
+	var sessData session.Data
+	err = s.coder().NewDecoder(bytes.NewReader(b)).Decode(&sessData)
+	if err != nil {
+		return nil, err
+	}
+	return sessData, nil
 }
 
 // Set sets session data to sql db
 func (s *SQL) Set(key string, value session.Data, opt session.StoreOption) error {
+	var buf bytes.Buffer
+	err := s.coder().NewEncoder(&buf).Encode(value)
+	if err != nil {
+		return err
+	}
+
 	now := time.Now()
 	var exp sql.NullTime
 	if opt.TTL > 0 {
@@ -76,7 +96,7 @@ func (s *SQL) Set(key string, value session.Data, opt session.StoreOption) error
 		exp.Time = now.Add(opt.TTL)
 	}
 
-	_, err := s.DB.Exec(s.SetStatement, key, s.encode(value), now, exp)
+	_, err = s.DB.Exec(s.SetStatement, key, buf.Bytes(), now, exp)
 	return err
 }
 
@@ -101,16 +121,4 @@ func (s *SQL) gcWorker(d time.Duration) {
 func (s *SQL) GCEvery(d time.Duration) *SQL {
 	time.AfterFunc(d, func() { s.gcWorker(d) })
 	return s
-}
-
-func (s *SQL) encode(v interface{}) []byte {
-	var buf bytes.Buffer
-	session.DefaultStoreCoder.NewEncoder(&buf).Encode(v)
-	return buf.Bytes()
-}
-
-func (s *SQL) decode(b []byte) session.Data {
-	var d session.Data
-	session.DefaultStoreCoder.NewDecoder(bytes.NewReader(b)).Decode(&d)
-	return d
 }
