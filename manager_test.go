@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moonrhythm/session"
-	"github.com/moonrhythm/session/store/memory"
+	"github.com/moonrhythm/session/store"
 )
 
 func TestManagerGetSave(t *testing.T) {
@@ -88,7 +88,7 @@ func TestManagerNotPassMiddleware(t *testing.T) {
 
 	m := session.New(session.Config{
 		MaxAge: time.Second,
-		Store:  memory.New(memory.Config{}),
+		Store:  new(store.Memory),
 	})
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)

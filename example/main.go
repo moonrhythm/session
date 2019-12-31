@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/moonrhythm/session"
-	"github.com/moonrhythm/session/store/memory"
+	"github.com/moonrhythm/session/store"
 )
 
 func main() {
 	h := session.New(session.Config{
-		Store:    memory.New(memory.Config{}),
+		Store:    new(store.Memory),
 		HTTPOnly: true,
 		Secret:   []byte("supersalt"),
 		Keys:     [][]byte{[]byte("supersecret")},

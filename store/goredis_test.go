@@ -1,4 +1,4 @@
-package goredis_test
+package store
 
 import (
 	"testing"
@@ -8,18 +8,17 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moonrhythm/session"
-	store "github.com/moonrhythm/session/store/goredis"
 )
 
-func TestRedis(t *testing.T) {
+func TestGoRedis(t *testing.T) {
 	t.Parallel()
 
-	s := store.New(store.Config{
+	s := &GoRedis{
 		Prefix: "session:",
 		Client: redis.NewClient(&redis.Options{
 			Addr: "localhost:6379",
 		}),
-	})
+	}
 
 	opt := session.StoreOption{TTL: time.Second}
 
@@ -55,15 +54,15 @@ func TestRedis(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestRedisWithoutTTL(t *testing.T) {
+func TestGoRedisWithoutTTL(t *testing.T) {
 	t.Parallel()
 
-	s := store.New(store.Config{
+	s := &GoRedis{
 		Prefix: "session:",
 		Client: redis.NewClient(&redis.Options{
 			Addr: "localhost:6379",
 		}),
-	})
+	}
 
 	opt := session.StoreOption{}
 

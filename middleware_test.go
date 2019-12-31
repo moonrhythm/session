@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moonrhythm/session"
-	"github.com/moonrhythm/session/store/memory"
+	"github.com/moonrhythm/session/store"
 )
 
 const sessName = "sess"
@@ -543,7 +543,7 @@ func TestRolling(t *testing.T) {
 	h := session.Middleware(session.Config{
 		MaxAge:  time.Second,
 		Rolling: true,
-		Store:   memory.New(memory.Config{}),
+		Store:   new(store.Memory),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
@@ -581,7 +581,7 @@ func TestRollingDisable(t *testing.T) {
 	h := session.Middleware(session.Config{
 		MaxAge:  5 * time.Second,
 		Rolling: false,
-		Store:   memory.New(memory.Config{}),
+		Store:   new(store.Memory),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
@@ -717,7 +717,7 @@ func TestFlash(t *testing.T) {
 
 	i := 0
 	h := session.Middleware(session.Config{
-		Store:  memory.New(memory.Config{}),
+		Store:  new(store.Memory),
 		MaxAge: time.Minute,
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s, _ := session.Get(r.Context(), "sess")
@@ -816,7 +816,7 @@ func TestSignature(t *testing.T) {
 
 	c := 0
 
-	store := memory.New(memory.Config{})
+	s := new(store.Memory)
 	hh := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s, _ := session.Get(r.Context(), sessName)
 		if c == 0 {
@@ -835,7 +835,7 @@ func TestSignature(t *testing.T) {
 		Keys: [][]byte{
 			[]byte("key1"),
 		},
-		Store: store,
+		Store: s,
 	})(hh)
 
 	w := httptest.NewRecorder()
@@ -856,7 +856,7 @@ func TestSignature(t *testing.T) {
 				[]byte("key2"),
 				[]byte("key1"),
 			},
-			Store:   store,
+			Store:   s,
 			Rolling: true,
 		})(hh)
 
@@ -870,7 +870,7 @@ func TestSignature(t *testing.T) {
 			Keys: [][]byte{
 				[]byte("key2"),
 			},
-			Store: store,
+			Store: s,
 		})(hh)
 
 		w = httptest.NewRecorder()
@@ -891,7 +891,7 @@ func TestEmptyBody(t *testing.T) {
 	t.Parallel()
 
 	h := session.Middleware(session.Config{
-		Store: memory.New(memory.Config{}),
+		Store: new(store.Memory),
 	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s, _ := session.Get(r.Context(), sessName)
 		s.Set("a", 1)
