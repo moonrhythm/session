@@ -26,6 +26,11 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
 	sess, _ := session.Get(r.Context(), "sess")
 	cnt := sess.GetInt("cnt")
 	cnt++
