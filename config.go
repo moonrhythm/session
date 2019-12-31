@@ -34,6 +34,9 @@ type Config struct {
 	// Resave forces session to save to store even if session was not modified
 	Resave bool
 
+	// ResaveAfter is the time to wait before resave since last timestamp
+	ResaveAfter time.Duration
+
 	// Rolling, set cookie every responses
 	Rolling bool
 

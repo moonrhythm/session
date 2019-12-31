@@ -139,14 +139,6 @@ func (m *scopedManager) Flush() {
 	}
 }
 
-// CloseNotify implements CloseNotifier interface
-func (m *scopedManager) CloseNotify() <-chan bool {
-	if w, ok := m.ResponseWriter.(http.CloseNotifier); ok {
-		return w.CloseNotify()
-	}
-	return nil
-}
-
 // Hijack implements Hijacker interface
 func (m *scopedManager) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if w, ok := m.ResponseWriter.(http.Hijacker); ok {

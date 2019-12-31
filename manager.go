@@ -117,22 +117,31 @@ invalidSignature:
 func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 	m.setCookie(w, s)
 
-	opt := makeStoreOption(m, s)
-
 	// detect is flash changed and encode new flash data
 	if s.flash != nil && s.flash.Changed() {
 		b, _ := s.flash.encode()
 		s.Set(flashKey, b)
 	}
 
-	// if session not modified, don't save to store to prevent store overflow
-	if !m.config.Resave && !s.Changed() {
+	// if session modified, then save
+	if s.Changed() {
+		goto save
+	}
+
+	// session not modified, and not resave, then do nothing
+	if !m.config.Resave {
 		return nil
 	}
 
-	// save sesion data to store
+	// session not modified, configured to resave but not pass ResaveAfter
+	if lastSave := time.Unix(s.GetInt64(timestampKey), 0); time.Now().Before(lastSave.Add(m.config.ResaveAfter)) {
+		return nil
+	}
+
+save:
+	// save session data to store
 	s.Set(timestampKey, time.Now().Unix())
-	return m.config.Store.Set(s.id, s.data, opt)
+	return m.config.Store.Set(s.id, s.data, makeStoreOption(m, s))
 }
 
 // Destroy deletes session from store
