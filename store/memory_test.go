@@ -23,28 +23,22 @@ func TestMemory(t *testing.T) {
 	assert.NoError(t, err)
 
 	time.Sleep(5 * time.Millisecond)
-	b, err := s.Get("a", opt)
+	b, err := s.Get("a")
 	assert.Nil(t, b)
 	assert.Error(t, err)
 
 	s.Set("a", data, opt)
 	time.Sleep(20 * time.Millisecond)
-	_, err = s.Get("a", opt)
+	_, err = s.Get("a")
 	assert.Error(t, err, "expected expired key return error")
 
 	s.Set("a", data, session.StoreOption{TTL: time.Second})
-	b, err = s.Get("a", opt)
+	b, err = s.Get("a")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 
-	_, err = s.Get("a", session.StoreOption{Rolling: true, TTL: time.Minute})
-	assert.NoError(t, err)
-	time.Sleep(time.Second)
-	_, err = s.Get("a", opt)
-	assert.NoError(t, err)
-
-	s.Del("a", opt)
-	_, err = s.Get("a", opt)
+	s.Del("a")
+	_, err = s.Get("a")
 	assert.Error(t, err)
 }
 
@@ -61,7 +55,7 @@ func TestMemoryWithoutTTL(t *testing.T) {
 	err := s.Set("a", data, opt)
 	assert.NoError(t, err)
 
-	b, err := s.Get("a", opt)
+	b, err := s.Get("a")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 }

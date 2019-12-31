@@ -91,7 +91,7 @@ func TestEmptySession(t *testing.T) {
 
 	h := session.Middleware(session.Config{
 		Store: &mockStore{
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				assert.Fail(t, "expected get was not called")
 				return nil, nil
 			},
@@ -99,7 +99,7 @@ func TestEmptySession(t *testing.T) {
 				assert.Fail(t, "expected set was not called")
 				return nil
 			},
-			DelFunc: func(key string, opt session.StoreOption) error {
+			DelFunc: func(key string) error {
 				assert.Fail(t, "expected del was not called")
 				return nil
 			},
@@ -120,7 +120,7 @@ func TestEmptySessionFlash(t *testing.T) {
 
 	h := session.Middleware(session.Config{
 		Store: &mockStore{
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				assert.Fail(t, "expected get was not called")
 				return nil, nil
 			},
@@ -128,7 +128,7 @@ func TestEmptySessionFlash(t *testing.T) {
 				assert.Fail(t, "expected set was not called")
 				return nil
 			},
-			DelFunc: func(key string, opt session.StoreOption) error {
+			DelFunc: func(key string) error {
 				assert.Fail(t, "expected del was not called")
 				return nil
 			},
@@ -202,7 +202,7 @@ func TestSessionGetSet(t *testing.T) {
 				setValue = value
 				return nil
 			},
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				assert.Equal(t, setKey, key)
 				return setValue, nil
 			},
@@ -378,10 +378,10 @@ func TestRegenerate(t *testing.T) {
 				assert.NotEqual(t, setKey, key, "expected key after regenerate to renew")
 				return nil
 			},
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				return setValue[key], nil
 			},
-			DelFunc: func(key string, opt session.StoreOption) error {
+			DelFunc: func(key string) error {
 				setValue[key] = nil
 				return nil
 			},
@@ -446,10 +446,10 @@ func TestRegenerateDeleteOldSession(t *testing.T) {
 				setValue[key] = value
 				return nil
 			},
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				return setValue[key], nil
 			},
-			DelFunc: func(key string, opt session.StoreOption) error {
+			DelFunc: func(key string) error {
 				setValue[key] = nil
 				return nil
 			},
@@ -510,7 +510,7 @@ func TestResave(t *testing.T) {
 				setValue[key] = value
 				return nil
 			},
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				return setValue[key], nil
 			},
 		},
@@ -626,10 +626,10 @@ func TestDestroy(t *testing.T) {
 				setValue = value
 				return nil
 			},
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				return setValue, nil
 			},
-			DelFunc: func(key string, opt session.StoreOption) error {
+			DelFunc: func(key string) error {
 				delCalled = true
 				assert.Equal(t, setKey, key, "expected destroy old key")
 				return nil
@@ -759,10 +759,10 @@ func TestHijack(t *testing.T) {
 				setValue[key] = value
 				return nil
 			},
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				return setValue[key], nil
 			},
-			DelFunc: func(key string, opt session.StoreOption) error {
+			DelFunc: func(key string) error {
 				setValue[key] = nil
 				return nil
 			},

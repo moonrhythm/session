@@ -5,16 +5,16 @@ import (
 )
 
 type mockStore struct {
-	GetFunc func(string, session.StoreOption) (session.Data, error)
+	GetFunc func(string) (session.Data, error)
 	SetFunc func(string, session.Data, session.StoreOption) error
-	DelFunc func(string, session.StoreOption) error
+	DelFunc func(string) error
 }
 
-func (m *mockStore) Get(key string, opt session.StoreOption) (session.Data, error) {
+func (m *mockStore) Get(key string) (session.Data, error) {
 	if m.GetFunc == nil {
 		return nil, nil
 	}
-	return m.GetFunc(key, opt)
+	return m.GetFunc(key)
 }
 
 func (m *mockStore) Set(key string, value session.Data, opt session.StoreOption) error {
@@ -24,9 +24,9 @@ func (m *mockStore) Set(key string, value session.Data, opt session.StoreOption)
 	return m.SetFunc(key, value, opt)
 }
 
-func (m *mockStore) Del(key string, opt session.StoreOption) error {
+func (m *mockStore) Del(key string) error {
 	if m.DelFunc == nil {
 		return nil
 	}
-	return m.DelFunc(key, opt)
+	return m.DelFunc(key)
 }

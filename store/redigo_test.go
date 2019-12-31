@@ -28,28 +28,22 @@ func TestRedigo(t *testing.T) {
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
-	b, err := s.Get("__redigo", opt)
+	b, err := s.Get("__redigo")
 	assert.Nil(t, b, "expected expired key return nil")
 	assert.Error(t, err)
 
 	s.Set("__redigo", data, opt)
 	time.Sleep(2 * time.Second)
-	_, err = s.Get("__redigo", opt)
+	_, err = s.Get("__redigo")
 	assert.Error(t, err, "expected expired key return error")
 
 	s.Set("__redigo", data, opt)
-	b, err = s.Get("__redigo", opt)
+	b, err = s.Get("__redigo")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 
-	_, err = s.Get("__redigo", session.StoreOption{Rolling: true, TTL: time.Minute})
-	assert.NoError(t, err)
-	time.Sleep(time.Second)
-	_, err = s.Get("__redigo", opt)
-	assert.NoError(t, err)
-
-	s.Del("__redigo", opt)
-	_, err = s.Get("__redigo", opt)
+	s.Del("__redigo")
+	_, err = s.Get("__redigo")
 	assert.Error(t, err)
 }
 
@@ -70,7 +64,7 @@ func TestRedigoWithoutTTL(t *testing.T) {
 	err := s.Set("__redigo_without_ttl", data, opt)
 	assert.NoError(t, err)
 
-	b, err := s.Get("__redigo_without_ttl", opt)
+	b, err := s.Get("__redigo_without_ttl")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 }

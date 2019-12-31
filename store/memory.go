@@ -53,7 +53,7 @@ func (s *Memory) GC() {
 }
 
 // Get gets session data from memory
-func (s *Memory) Get(key string, opt session.StoreOption) (session.Data, error) {
+func (s *Memory) Get(key string) (session.Data, error) {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
@@ -68,9 +68,6 @@ func (s *Memory) Get(key string, opt session.StoreOption) (session.Data, error) 
 	err := s.coder().NewDecoder(bytes.NewReader(v.data)).Decode(&sessData)
 	if err != nil {
 		return nil, err
-	}
-	if opt.Rolling && opt.TTL > 0 {
-		v.exp = time.Now().Add(opt.TTL)
 	}
 	return sessData, nil
 }
@@ -97,7 +94,7 @@ func (s *Memory) Set(key string, value session.Data, opt session.StoreOption) er
 }
 
 // Del deletes session data from memory
-func (s *Memory) Del(key string, opt session.StoreOption) error {
+func (s *Memory) Del(key string) error {
 	s.m.Lock()
 	delete(s.l, key)
 	s.m.Unlock()

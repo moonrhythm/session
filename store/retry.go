@@ -24,9 +24,9 @@ func (s *Retry) backOffDuration() time.Duration {
 }
 
 // Get gets session data from wrapped store with retry
-func (s *Retry) Get(key string, opt session.StoreOption) (r session.Data, err error) {
+func (s *Retry) Get(key string) (r session.Data, err error) {
 	for i := 0; i < s.MaxAttempts; i++ {
-		r, err = s.Store.Get(key, opt)
+		r, err = s.Store.Get(key)
 		if err == nil || err == session.ErrNotFound {
 			break
 		}
@@ -48,9 +48,9 @@ func (s *Retry) Set(key string, value session.Data, opt session.StoreOption) (er
 }
 
 // Del deletes session data from wrapped store with retry
-func (s *Retry) Del(key string, opt session.StoreOption) (err error) {
+func (s *Retry) Del(key string) (err error) {
 	for i := 0; i < s.MaxAttempts; i++ {
-		err = s.Store.Del(key, opt)
+		err = s.Store.Del(key)
 		if err == nil {
 			break
 		}

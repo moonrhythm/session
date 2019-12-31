@@ -89,7 +89,7 @@ func (m *Manager) Get(r *http.Request, name string) (*Session, error) {
 		hashedID := m.hashID(rawID)
 
 		// get session data from store
-		s.data, err = m.config.Store.Get(hashedID, makeStoreOption(m, &s))
+		s.data, err = m.config.Store.Get(hashedID)
 		if err == nil {
 			s.rawID = rawID
 			s.id = hashedID
@@ -137,14 +137,12 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 
 // Destroy deletes session from store
 func (m *Manager) Destroy(s *Session) error {
-	return m.config.Store.Del(s.id, makeStoreOption(m, s))
+	return m.config.Store.Del(s.id)
 }
 
 // Regenerate regenerates session id
 // use when change user access level to prevent session fixation
 func (m *Manager) Regenerate(w http.ResponseWriter, s *Session) error {
-	opt := makeStoreOption(m, s)
-
 	id := s.id
 
 	s.rawID = m.config.GenerateID()
@@ -153,13 +151,13 @@ func (m *Manager) Regenerate(w http.ResponseWriter, s *Session) error {
 	s.changed = true
 
 	if m.config.DeleteOldSession {
-		return m.config.Store.Del(id, opt)
+		return m.config.Store.Del(id)
 	}
 
 	data := s.data.Clone()
 	data[timestampKey] = int64(0)
 	data[destroyedKey] = time.Now().UnixNano()
-	return m.config.Store.Set(id, data, opt)
+	return m.config.Store.Set(id, data, makeStoreOption(m, s))
 }
 
 // Renew clears session data and regenerate new session id

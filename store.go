@@ -16,21 +16,19 @@ var (
 
 // Store interface
 type Store interface {
-	Get(key string, opt StoreOption) (Data, error)
+	Get(key string) (Data, error)
 	Set(key string, value Data, opt StoreOption) error
-	Del(key string, opt StoreOption) error
+	Del(key string) error
 }
 
 // StoreOption type
 type StoreOption struct {
-	Rolling bool
-	TTL     time.Duration
+	TTL time.Duration
 }
 
 func makeStoreOption(m *Manager, s *Session) StoreOption {
 	return StoreOption{
-		Rolling: s.Rolling,
-		TTL:     m.config.IdleTimeout,
+		TTL: m.config.IdleTimeout,
 	}
 }
 

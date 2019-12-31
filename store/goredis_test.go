@@ -29,28 +29,22 @@ func TestGoRedis(t *testing.T) {
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
-	b, err := s.Get("__goredis", opt)
+	b, err := s.Get("__goredis")
 	assert.Nil(t, b, "expected expired key return nil")
 	assert.Error(t, err)
 
 	s.Set("__goredis", data, opt)
 	time.Sleep(2 * time.Second)
-	_, err = s.Get("__goredis", opt)
+	_, err = s.Get("__goredis")
 	assert.Error(t, err, "expected expired key return error")
 
 	s.Set("__goredis", data, opt)
-	b, err = s.Get("__goredis", opt)
+	b, err = s.Get("__goredis")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 
-	_, err = s.Get("__goredis", session.StoreOption{Rolling: true, TTL: time.Minute})
-	assert.NoError(t, err)
-	time.Sleep(time.Second)
-	_, err = s.Get("__goredis", opt)
-	assert.NoError(t, err)
-
-	s.Del("__goredis", opt)
-	_, err = s.Get("__goredis", opt)
+	s.Del("__goredis")
+	_, err = s.Get("__goredis")
 	assert.Error(t, err)
 }
 
@@ -72,7 +66,7 @@ func TestGoRedisWithoutTTL(t *testing.T) {
 	err := s.Set("__goredis_without_ttl", data, opt)
 	assert.NoError(t, err)
 
-	b, err := s.Get("__goredis_without_ttl", opt)
+	b, err := s.Get("__goredis_without_ttl")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 }

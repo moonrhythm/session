@@ -29,7 +29,7 @@ func TestManagerGetSave(t *testing.T) {
 				setValue = value
 				return nil
 			},
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				assert.Equal(t, setKey, key)
 				return setValue, nil
 			},
@@ -65,7 +65,7 @@ func TestManagerGetError(t *testing.T) {
 	m := session.New(session.Config{
 		MaxAge: time.Second,
 		Store: &mockStore{
-			GetFunc: func(key string, opt session.StoreOption) (session.Data, error) {
+			GetFunc: func(key string) (session.Data, error) {
 				return nil, fmt.Errorf("store error")
 			},
 		},
