@@ -22,7 +22,7 @@ jobs:
         postgresql version: 12
     - uses: jakejarvis/wait-action@v0.1.0
       with:
-        time: 5s
+        time: 10s
     - run: go get -t -v ./...
     - run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
     - run: bash <(curl -s https://codecov.io/bash)
