@@ -1,6 +1,5 @@
 # session
 
-[![Build Status](https://travis-ci.org/moonrhythm/session.svg?branch=master)](https://travis-ci.org/moonrhythm/session)
 [![codecov](https://codecov.io/gh/moonrhythm/session/branch/master/graph/badge.svg)](https://codecov.io/gh/moonrhythm/session)
 [![Go Report Card](https://goreportcard.com/badge/github.com/moonrhythm/session)](https://goreportcard.com/report/github.com/moonrhythm/session)
 [![GoDoc](https://godoc.org/github.com/moonrhythm/session?status.svg)](https://godoc.org/github.com/moonrhythm/session)
