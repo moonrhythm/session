@@ -23,6 +23,7 @@ jobs:
     - uses: jakejarvis/wait-action@v0.1.0
       with:
         time: 10s
+    - uses: jwalton/gh-docker-logs@v1.0.0
     - run: go get -t -v ./...
     - run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
     - run: bash <(curl -s https://codecov.io/bash)
