@@ -8,6 +8,8 @@ jobs:
     services:
       postgres:
         image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -35,4 +37,9 @@ jobs:
         go-version: ${{ matrix.go }}
     - run: go get -t -v ./...
     - run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+      env:
+        POSTGRES_HOST: postgres
+        POSTGRES_PORT: 5432
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
     - run: bash <(curl -s https://codecov.io/bash)

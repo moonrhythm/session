@@ -2,6 +2,8 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -11,13 +13,35 @@ import (
 	"github.com/moonrhythm/session"
 )
 
-func TestSQL_PostgreSQL(t *testing.T) {
-	t.Parallel()
+func openPostgreSQL(t *testing.T) *sql.DB {
+	t.Helper()
 
-	db, err := sql.Open("postgres", "postgres://localhost:5432/postgres?sslmode=disable")
+	host := os.Getenv("POSTGRES_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("POSTGRES_PORT")
+	if port == "" {
+		port = "5432"
+	}
+	user := os.Getenv("POSTGRES_USER")
+	if user == "" {
+		user = "postgres"
+	}
+	password := os.Getenv("POSTGRES_PASSWORD")
+
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/postgres?sslmode=disable", user, password, host, port)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Fatalf("can not open postgres database: %v", err)
 	}
+	return db
+}
+
+func TestSQL_PostgreSQL(t *testing.T) {
+	t.Parallel()
+
+	db := openPostgreSQL(t)
 	defer db.Close()
 
 	db.Exec(`drop table if exists __sql_postgresql`)
@@ -31,7 +55,7 @@ func TestSQL_PostgreSQL(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err = s.Set("a", data, opt)
+	err := s.Set("a", data, opt)
 	assert.NoError(t, err)
 
 	time.Sleep(100 * time.Millisecond)
@@ -57,10 +81,7 @@ func TestSQL_PostgreSQL(t *testing.T) {
 func TestSQLWithoutTTL(t *testing.T) {
 	t.Parallel()
 
-	db, err := sql.Open("postgres", "postgres://localhost:5432/postgres?sslmode=disable")
-	if err != nil {
-		t.Fatalf("can not open postgres database: %v", err)
-	}
+	db := openPostgreSQL(t)
 	defer db.Close()
 
 	db.Exec(`drop table if exists __sql_postgresql_without_ttl`)
@@ -74,7 +95,7 @@ func TestSQLWithoutTTL(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err = s.Set("a", data, opt)
+	err := s.Set("a", data, opt)
 	assert.NoError(t, err)
 
 	b, err := s.Get("a")
