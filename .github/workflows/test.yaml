@@ -3,8 +3,29 @@ on:
   push:
   pull_request:
 jobs:
+  runner-job:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        - 5432:5432
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        - 6379:6379
   build:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         go: ['1.13', '1.14']
@@ -14,16 +35,6 @@ jobs:
     - uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go }}
-    - uses: supercharge/redis-github-action@1.1.0
-      with:
-        redis-version: 5
-    - uses: harmon758/postgresql-action@v1
-      with:
-        postgresql version: 12
-    - uses: jakejarvis/wait-action@v0.1.0
-      with:
-        time: 10s
-    - uses: jwalton/gh-docker-logs@v1.0.0
     - run: go get -t -v ./...
     - run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
     - run: bash <(curl -s https://codecov.io/bash)
