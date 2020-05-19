@@ -19,7 +19,7 @@ import (
     "time"
 
     "github.com/moonrhythm/session"
-    store "github.com/moonrhythm/session/store/memory"
+    "github.com/moonrhythm/session/store"
 )
 
 func main() {
@@ -72,7 +72,7 @@ import (
     "time"
 
     "github.com/moonrhythm/session"
-    store "github.com/moonrhythm/session/store/memory"
+    "github.com/moonrhythm/session/store"
 )
 
 func main() {
@@ -112,6 +112,8 @@ func main() {
     log.Fatal(http.ListenAndServe(":8080", mux))
 }
 ```
+
+[See more examples](https://github.com/moonrhythm/session/tree/master/example)
 
 ## License
 
