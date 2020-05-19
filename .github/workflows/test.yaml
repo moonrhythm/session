@@ -38,7 +38,6 @@ jobs:
     - run: go get -t -v ./...
     - run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
       env:
-        POSTGRES_HOST: postgres
         POSTGRES_PORT: 5432
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
