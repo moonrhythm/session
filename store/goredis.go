@@ -2,14 +2,15 @@ package store
 
 import (
 	"bytes"
+	"context"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 
 	"github.com/moonrhythm/session"
 )
 
 // GoRedis is the redis store
-// implement by using "github.com/go-redis/redis" package
+// implement by using "github.com/go-redis/redis/v8" package
 type GoRedis struct {
 	Client *redis.Client
 	Prefix string
@@ -24,8 +25,8 @@ func (s *GoRedis) coder() session.StoreCoder {
 }
 
 // Get gets session data from redis
-func (s *GoRedis) Get(key string) (session.Data, error) {
-	data, err := s.Client.Get(s.Prefix + key).Bytes()
+func (s *GoRedis) Get(ctx context.Context, key string) (session.Data, error) {
+	data, err := s.Client.Get(ctx, s.Prefix+key).Bytes()
 	if err == redis.Nil {
 		return nil, session.ErrNotFound
 	}
@@ -42,16 +43,16 @@ func (s *GoRedis) Get(key string) (session.Data, error) {
 }
 
 // Set sets session data to redis
-func (s *GoRedis) Set(key string, value session.Data, opt session.StoreOption) error {
+func (s *GoRedis) Set(ctx context.Context, key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
 	err := s.coder().NewEncoder(&buf).Encode(value)
 	if err != nil {
 		return err
 	}
-	return s.Client.Set(s.Prefix+key, buf.Bytes(), opt.TTL).Err()
+	return s.Client.Set(ctx, s.Prefix+key, buf.Bytes(), opt.TTL).Err()
 }
 
 // Del deletes session data from redis
-func (s *GoRedis) Del(key string) error {
-	return s.Client.Del(s.Prefix + key).Err()
+func (s *GoRedis) Del(ctx context.Context, key string) error {
+	return s.Client.Del(ctx, s.Prefix+key).Err()
 }

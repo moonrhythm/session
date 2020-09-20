@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 func TestRedigo(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	s := &Redigo{Prefix: "session:", Pool: &redis.Pool{
 		Dial: func() (redis.Conn, error) {
 			return redis.Dial("tcp", "localhost:6379")
@@ -24,31 +27,33 @@ func TestRedigo(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err := s.Set("__redigo", data, opt)
+	err := s.Set(ctx, "__redigo", data, opt)
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
-	b, err := s.Get("__redigo")
+	b, err := s.Get(ctx, "__redigo")
 	assert.Nil(t, b, "expected expired key return nil")
 	assert.Error(t, err)
 
-	s.Set("__redigo", data, opt)
+	s.Set(ctx, "__redigo", data, opt)
 	time.Sleep(2 * time.Second)
-	_, err = s.Get("__redigo")
+	_, err = s.Get(ctx, "__redigo")
 	assert.Error(t, err, "expected expired key return error")
 
-	s.Set("__redigo", data, opt)
-	b, err = s.Get("__redigo")
+	s.Set(ctx, "__redigo", data, opt)
+	b, err = s.Get(ctx, "__redigo")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 
-	s.Del("__redigo")
-	_, err = s.Get("__redigo")
+	s.Del(ctx, "__redigo")
+	_, err = s.Get(ctx, "__redigo")
 	assert.Error(t, err)
 }
 
 func TestRedigoWithoutTTL(t *testing.T) {
 	t.Parallel()
+
+	ctx := context.Background()
 
 	s := &Redigo{Prefix: "session:", Pool: &redis.Pool{
 		Dial: func() (redis.Conn, error) {
@@ -61,10 +66,10 @@ func TestRedigoWithoutTTL(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err := s.Set("__redigo_without_ttl", data, opt)
+	err := s.Set(ctx, "__redigo_without_ttl", data, opt)
 	assert.NoError(t, err)
 
-	b, err := s.Get("__redigo_without_ttl")
+	b, err := s.Get(ctx, "__redigo_without_ttl")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 }

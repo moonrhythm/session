@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -66,9 +67,9 @@ func (s *SQL) GeneratePostgreSQLStatement(table string, initSchema bool) *SQL {
 }
 
 // Get gets session data from sql db
-func (s *SQL) Get(key string) (session.Data, error) {
+func (s *SQL) Get(ctx context.Context, key string) (session.Data, error) {
 	var b []byte
-	err := s.DB.QueryRow(s.GetStatement, key).Scan(&b)
+	err := s.DB.QueryRowContext(ctx, s.GetStatement, key).Scan(&b)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, session.ErrNotFound
 	}
@@ -82,7 +83,7 @@ func (s *SQL) Get(key string) (session.Data, error) {
 }
 
 // Set sets session data to sql db
-func (s *SQL) Set(key string, value session.Data, opt session.StoreOption) error {
+func (s *SQL) Set(ctx context.Context, key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
 	err := s.coder().NewEncoder(&buf).Encode(value)
 	if err != nil {
@@ -96,13 +97,13 @@ func (s *SQL) Set(key string, value session.Data, opt session.StoreOption) error
 		exp.Time = now.Add(opt.TTL)
 	}
 
-	_, err = s.DB.Exec(s.SetStatement, key, buf.Bytes(), now, exp)
+	_, err = s.DB.ExecContext(ctx, s.SetStatement, key, buf.Bytes(), now, exp)
 	return err
 }
 
 // Del deletes session data from sql db
-func (s *SQL) Del(key string) error {
-	_, err := s.DB.Exec(s.DelStatement, key)
+func (s *SQL) Del(ctx context.Context, key string) error {
+	_, err := s.DB.ExecContext(ctx, s.DelStatement, key)
 	return err
 }
 

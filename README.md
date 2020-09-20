@@ -97,14 +97,14 @@ func main() {
         cnt := s.GetInt("counter")
         cnt++
         s.Set("counter", cnt)
-        m.Save(w, s)
+        m.Save(r.Context(), w, s)
         w.Header().Set("Content-Type", "text/html")
         fmt.Fprintf(w, "Couter: %d<br><a href=\"/reset\">Reset</a>", cnt)
     })
     mux.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
         s, _ := m.Get(r, "sess")
         s.Del("counter")
-        m.Save(w, s)
+        m.Save(r.Context(), w, s)
         http.Redirect(w, r, "/", http.StatusFound)
     })
 

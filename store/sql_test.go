@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -41,6 +42,8 @@ func openPostgreSQL(t *testing.T) *sql.DB {
 func TestSQL_PostgreSQL(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	db := openPostgreSQL(t)
 	defer db.Close()
 
@@ -55,31 +58,33 @@ func TestSQL_PostgreSQL(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err := s.Set("a", data, opt)
+	err := s.Set(ctx, "a", data, opt)
 	assert.NoError(t, err)
 
 	time.Sleep(100 * time.Millisecond)
-	b, err := s.Get("a")
+	b, err := s.Get(ctx, "a")
 	assert.Nil(t, b)
 	assert.Error(t, err)
 
-	s.Set("a", data, opt)
+	s.Set(ctx, "a", data, opt)
 	time.Sleep(100 * time.Millisecond)
-	_, err = s.Get("a")
+	_, err = s.Get(ctx, "a")
 	assert.Error(t, err, "expected expired key return error")
 
-	s.Set("a", data, session.StoreOption{TTL: time.Second})
-	b, err = s.Get("a")
+	s.Set(ctx, "a", data, session.StoreOption{TTL: time.Second})
+	b, err = s.Get(ctx, "a")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 
-	s.Del("a")
-	_, err = s.Get("a")
+	s.Del(ctx, "a")
+	_, err = s.Get(ctx, "a")
 	assert.Error(t, err)
 }
 
 func TestSQLWithoutTTL(t *testing.T) {
 	t.Parallel()
+
+	ctx := context.Background()
 
 	db := openPostgreSQL(t)
 	defer db.Close()
@@ -95,10 +100,10 @@ func TestSQLWithoutTTL(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err := s.Set("a", data, opt)
+	err := s.Set(ctx, "a", data, opt)
 	assert.NoError(t, err)
 
-	b, err := s.Get("a")
+	b, err := s.Get(ctx, "a")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 }

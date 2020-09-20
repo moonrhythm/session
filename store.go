@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"encoding/gob"
 	"errors"
 	"io"
@@ -16,9 +17,9 @@ var (
 
 // Store interface
 type Store interface {
-	Get(key string) (Data, error)
-	Set(key string, value Data, opt StoreOption) error
-	Del(key string) error
+	Get(ctx context.Context, key string) (Data, error)
+	Set(ctx context.Context, key string, value Data, opt StoreOption) error
+	Del(ctx context.Context, key string) error
 }
 
 // StoreOption type
