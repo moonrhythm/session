@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+	"context"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -25,8 +26,12 @@ func (s *Redigo) coder() session.StoreCoder {
 }
 
 // Get gets session data from redis
-func (s *Redigo) Get(key string) (session.Data, error) {
-	c := s.Pool.Get()
+func (s *Redigo) Get(ctx context.Context, key string) (session.Data, error) {
+	c, err := s.Pool.GetContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	data, err := redis.Bytes(c.Do("GET", s.Prefix+key))
 	c.Close()
 	if err == redis.ErrNil {
@@ -45,14 +50,17 @@ func (s *Redigo) Get(key string) (session.Data, error) {
 }
 
 // Set sets session data to redis
-func (s *Redigo) Set(key string, value session.Data, opt session.StoreOption) error {
+func (s *Redigo) Set(ctx context.Context, key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
 	err := s.coder().NewEncoder(&buf).Encode(value)
 	if err != nil {
 		return err
 	}
 
-	c := s.Pool.Get()
+	c, err := s.Pool.GetContext(ctx)
+	if err != nil {
+		return err
+	}
 	if opt.TTL > 0 {
 		_, err = c.Do("SETEX", s.Prefix+key, int64(opt.TTL/time.Second), buf.Bytes())
 	} else {
@@ -63,9 +71,12 @@ func (s *Redigo) Set(key string, value session.Data, opt session.StoreOption) er
 }
 
 // Del deletes session data from redis
-func (s *Redigo) Del(key string) error {
-	c := s.Pool.Get()
-	_, err := c.Do("DEL", s.Prefix+key)
+func (s *Redigo) Del(ctx context.Context, key string) error {
+	c, err := s.Pool.GetContext(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = c.Do("DEL", s.Prefix+key)
 	c.Close()
 	return err
 }

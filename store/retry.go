@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"time"
 
 	"github.com/moonrhythm/session"
@@ -24,9 +25,9 @@ func (s *Retry) backOffDuration() time.Duration {
 }
 
 // Get gets session data from wrapped store with retry
-func (s *Retry) Get(key string) (r session.Data, err error) {
+func (s *Retry) Get(ctx context.Context, key string) (r session.Data, err error) {
 	for i := 0; i < s.MaxAttempts; i++ {
-		r, err = s.Store.Get(key)
+		r, err = s.Store.Get(ctx, key)
 		if err == nil || err == session.ErrNotFound {
 			break
 		}
@@ -36,9 +37,9 @@ func (s *Retry) Get(key string) (r session.Data, err error) {
 }
 
 // Set sets session data to wrapped store with retry
-func (s *Retry) Set(key string, value session.Data, opt session.StoreOption) (err error) {
+func (s *Retry) Set(ctx context.Context, key string, value session.Data, opt session.StoreOption) (err error) {
 	for i := 0; i < s.MaxAttempts; i++ {
-		err = s.Store.Set(key, value, opt)
+		err = s.Store.Set(ctx, key, value, opt)
 		if err == nil {
 			break
 		}
@@ -48,9 +49,9 @@ func (s *Retry) Set(key string, value session.Data, opt session.StoreOption) (er
 }
 
 // Del deletes session data from wrapped store with retry
-func (s *Retry) Del(key string) (err error) {
+func (s *Retry) Del(ctx context.Context, key string) (err error) {
 	for i := 0; i < s.MaxAttempts; i++ {
-		err = s.Store.Del(key)
+		err = s.Store.Del(ctx, key)
 		if err == nil {
 			break
 		}

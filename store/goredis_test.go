@@ -1,10 +1,11 @@
 package store
 
 import (
+	"context"
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/moonrhythm/session"
@@ -12,6 +13,8 @@ import (
 
 func TestGoRedis(t *testing.T) {
 	t.Parallel()
+
+	ctx := context.Background()
 
 	s := &GoRedis{
 		Prefix: "session:",
@@ -25,31 +28,33 @@ func TestGoRedis(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err := s.Set("__goredis", data, opt)
+	err := s.Set(ctx, "__goredis", data, opt)
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
-	b, err := s.Get("__goredis")
+	b, err := s.Get(ctx, "__goredis")
 	assert.Nil(t, b, "expected expired key return nil")
 	assert.Error(t, err)
 
-	s.Set("__goredis", data, opt)
+	s.Set(ctx, "__goredis", data, opt)
 	time.Sleep(2 * time.Second)
-	_, err = s.Get("__goredis")
+	_, err = s.Get(ctx, "__goredis")
 	assert.Error(t, err, "expected expired key return error")
 
-	s.Set("__goredis", data, opt)
-	b, err = s.Get("__goredis")
+	s.Set(ctx, "__goredis", data, opt)
+	b, err = s.Get(ctx, "__goredis")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 
-	s.Del("__goredis")
-	_, err = s.Get("__goredis")
+	s.Del(ctx, "__goredis")
+	_, err = s.Get(ctx, "__goredis")
 	assert.Error(t, err)
 }
 
 func TestGoRedisWithoutTTL(t *testing.T) {
 	t.Parallel()
+
+	ctx := context.Background()
 
 	s := &GoRedis{
 		Prefix: "session:",
@@ -63,10 +68,10 @@ func TestGoRedisWithoutTTL(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err := s.Set("__goredis_without_ttl", data, opt)
+	err := s.Set(ctx, "__goredis_without_ttl", data, opt)
 	assert.NoError(t, err)
 
-	b, err := s.Get("__goredis_without_ttl")
+	b, err := s.Get(ctx, "__goredis_without_ttl")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 }

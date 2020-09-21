@@ -2,6 +2,7 @@ package store
 
 import (
 	"bytes"
+	"context"
 	"sync"
 	"time"
 
@@ -53,7 +54,7 @@ func (s *Memory) GC() {
 }
 
 // Get gets session data from memory
-func (s *Memory) Get(key string) (session.Data, error) {
+func (s *Memory) Get(_ context.Context, key string) (session.Data, error) {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
@@ -73,7 +74,7 @@ func (s *Memory) Get(key string) (session.Data, error) {
 }
 
 // Set sets session data to memory
-func (s *Memory) Set(key string, value session.Data, opt session.StoreOption) error {
+func (s *Memory) Set(_ context.Context, key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
 	err := s.coder().NewEncoder(&buf).Encode(value)
 	if err != nil {
@@ -94,7 +95,7 @@ func (s *Memory) Set(key string, value session.Data, opt session.StoreOption) er
 }
 
 // Del deletes session data from memory
-func (s *Memory) Del(key string) error {
+func (s *Memory) Del(_ context.Context, key string) error {
 	s.m.Lock()
 	delete(s.l, key)
 	s.m.Unlock()

@@ -82,7 +82,7 @@ func (m *scopedManager) Get(name string) (*Session, error) {
 }
 
 func (m *scopedManager) Save(s *Session) error {
-	return m.Manager.Save(m.ResponseWriter, s)
+	return m.Manager.Save(m.r.Context(), m.ResponseWriter, s)
 }
 
 func (m *scopedManager) MustSaveAll() {
@@ -99,11 +99,11 @@ func (m *scopedManager) MustSaveAll() {
 }
 
 func (m *scopedManager) Regenerate(s *Session) error {
-	return m.Manager.Regenerate(m.ResponseWriter, s)
+	return m.Manager.Regenerate(m.r.Context(), s)
 }
 
 func (m *scopedManager) Renew(s *Session) error {
-	return m.Manager.Renew(m.ResponseWriter, s)
+	return m.Manager.Renew(m.r.Context(), s)
 }
 
 // Write implements http.ResponseWriter

@@ -228,5 +228,5 @@ func (s *Session) Destroy() error {
 	if s.m == nil {
 		return ErrNotPassMiddleware
 	}
-	return s.m.Destroy(s)
+	return s.m.Destroy(s.m.r.Context(), s)
 }

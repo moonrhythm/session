@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -13,7 +14,7 @@ type mockStore struct {
 	attempt int
 }
 
-func (s *mockStore) Get(key string) (session.Data, error) {
+func (s *mockStore) Get(ctx context.Context, key string) (session.Data, error) {
 	s.attempt++
 	if s.attempt == 3 {
 		return nil, nil
@@ -21,7 +22,7 @@ func (s *mockStore) Get(key string) (session.Data, error) {
 	return nil, fmt.Errorf("error")
 }
 
-func (s *mockStore) Set(key string, value session.Data, opt session.StoreOption) error {
+func (s *mockStore) Set(ctx context.Context, key string, value session.Data, opt session.StoreOption) error {
 	s.attempt++
 	if s.attempt == 3 {
 		return nil
@@ -29,7 +30,7 @@ func (s *mockStore) Set(key string, value session.Data, opt session.StoreOption)
 	return fmt.Errorf("error")
 }
 
-func (s *mockStore) Del(key string) error {
+func (s *mockStore) Del(ctx context.Context, key string) error {
 	s.attempt++
 	if s.attempt == 3 {
 		return nil
@@ -38,41 +39,45 @@ func (s *mockStore) Del(key string) error {
 }
 
 func TestRetrySuccess(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("Get", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
-		_, err := s.Get("")
+		_, err := s.Get(ctx, "")
 		assert.NoError(t, err)
 	})
 
 	t.Run("Set", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
-		err := s.Set("", session.Data{}, session.StoreOption{})
+		err := s.Set(ctx, "", session.Data{}, session.StoreOption{})
 		assert.NoError(t, err)
 	})
 
 	t.Run("Del", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
-		err := s.Del("")
+		err := s.Del(ctx, "")
 		assert.NoError(t, err)
 	})
 }
 
 func TestRetryFail(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("Get", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}
-		_, err := s.Get("")
+		_, err := s.Get(ctx, "")
 		assert.Error(t, err)
 	})
 
 	t.Run("Set", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}
-		err := s.Set("", session.Data{}, session.StoreOption{})
+		err := s.Set(ctx, "", session.Data{}, session.StoreOption{})
 		assert.Error(t, err)
 	})
 
 	t.Run("Del", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}
-		err := s.Del("")
+		err := s.Del(ctx, "")
 		assert.Error(t, err)
 	})
 }

@@ -43,7 +43,7 @@ func TestManagerGetSave(t *testing.T) {
 		s.Set("test", c+1)
 		fmt.Fprintf(w, "%d", c)
 
-		m.Save(w, s)
+		m.Save(r.Context(), w, s)
 	}
 
 	w := httptest.NewRecorder()

@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -89,7 +90,7 @@ func (m *Manager) Get(r *http.Request, name string) (*Session, error) {
 		hashedID := m.hashID(rawID)
 
 		// get session data from store
-		s.data, err = m.config.Store.Get(hashedID)
+		s.data, err = m.config.Store.Get(r.Context(), hashedID)
 		if err == nil {
 			s.rawID = rawID
 			s.id = hashedID
@@ -114,7 +115,7 @@ invalidSignature:
 // Save saves session to store and set cookie to response
 //
 // Save must be called before response header was written
-func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
+func (m *Manager) Save(ctx context.Context, w http.ResponseWriter, s *Session) error {
 	m.setCookie(w, s)
 
 	// detect is flash changed and encode new flash data
@@ -141,17 +142,17 @@ func (m *Manager) Save(w http.ResponseWriter, s *Session) error {
 save:
 	// save session data to store
 	s.Set(timestampKey, time.Now().Unix())
-	return m.config.Store.Set(s.id, s.data, makeStoreOption(m, s))
+	return m.config.Store.Set(ctx, s.id, s.data, makeStoreOption(m, s))
 }
 
 // Destroy deletes session from store
-func (m *Manager) Destroy(s *Session) error {
-	return m.config.Store.Del(s.id)
+func (m *Manager) Destroy(ctx context.Context, s *Session) error {
+	return m.config.Store.Del(ctx, s.id)
 }
 
 // Regenerate regenerates session id
 // use when change user access level to prevent session fixation
-func (m *Manager) Regenerate(w http.ResponseWriter, s *Session) error {
+func (m *Manager) Regenerate(ctx context.Context, s *Session) error {
 	id := s.id
 
 	s.rawID = m.config.GenerateID()
@@ -160,19 +161,19 @@ func (m *Manager) Regenerate(w http.ResponseWriter, s *Session) error {
 	s.changed = true
 
 	if m.config.DeleteOldSession {
-		return m.config.Store.Del(id)
+		return m.config.Store.Del(ctx, id)
 	}
 
 	data := s.data.Clone()
 	data[timestampKey] = int64(0)
 	data[destroyedKey] = time.Now().UnixNano()
-	return m.config.Store.Set(id, data, makeStoreOption(m, s))
+	return m.config.Store.Set(ctx, id, data, makeStoreOption(m, s))
 }
 
 // Renew clears session data and regenerate new session id
-func (m *Manager) Renew(w http.ResponseWriter, s *Session) error {
+func (m *Manager) Renew(ctx context.Context, s *Session) error {
 	s.data = make(Data)
-	return m.Regenerate(w, s)
+	return m.Regenerate(ctx, s)
 }
 
 func (m *Manager) setCookie(w http.ResponseWriter, s *Session) {
