@@ -330,10 +330,10 @@ func TestSameSiteFlag(t *testing.T) {
 	cases := []struct {
 		flag http.SameSite
 	}{
-		{0},
 		{http.SameSiteDefaultMode},
 		{http.SameSiteLaxMode},
 		{http.SameSiteStrictMode},
+		{http.SameSiteNoneMode},
 	}
 
 	for _, c := range cases {
@@ -348,7 +348,7 @@ func TestSameSiteFlag(t *testing.T) {
 
 		cs := w.Result().Cookies()
 		if assert.Len(t, cs, 1) {
-			if c.flag == 0 {
+			if c.flag == http.SameSiteDefaultMode {
 				assert.Equal(t, http.SameSite(0), cs[0].SameSite)
 			} else {
 				assert.Equal(t, c.flag, cs[0].SameSite)

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -11,6 +12,14 @@ import (
 	"github.com/moonrhythm/session"
 )
 
+func redisAddr() string {
+	addr := os.Getenv("REDIS_ADDR")
+	if addr == "" {
+		addr = "localhost:6379"
+	}
+	return addr
+}
+
 func TestGoRedis(t *testing.T) {
 	t.Parallel()
 
@@ -19,7 +28,7 @@ func TestGoRedis(t *testing.T) {
 	s := &GoRedis{
 		Prefix: "session:",
 		Client: redis.NewClient(&redis.Options{
-			Addr: "localhost:6379",
+			Addr: redisAddr(),
 		}),
 	}
 
@@ -59,7 +68,7 @@ func TestGoRedisWithoutTTL(t *testing.T) {
 	s := &GoRedis{
 		Prefix: "session:",
 		Client: redis.NewClient(&redis.Options{
-			Addr: "localhost:6379",
+			Addr: redisAddr(),
 		}),
 	}
 

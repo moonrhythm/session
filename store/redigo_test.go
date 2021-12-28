@@ -18,7 +18,7 @@ func TestRedigo(t *testing.T) {
 
 	s := &Redigo{Prefix: "session:", Pool: &redis.Pool{
 		Dial: func() (redis.Conn, error) {
-			return redis.Dial("tcp", "localhost:6379")
+			return redis.Dial("tcp", redisAddr())
 		},
 	}}
 
@@ -57,7 +57,7 @@ func TestRedigoWithoutTTL(t *testing.T) {
 
 	s := &Redigo{Prefix: "session:", Pool: &redis.Pool{
 		Dial: func() (redis.Conn, error) {
-			return redis.Dial("tcp", "localhost:6379")
+			return redis.Dial("tcp", redisAddr())
 		},
 	}}
 
