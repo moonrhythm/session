@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/moonrhythm/session"
 )
 
 // GoRedis is the redis store
-// implement by using "github.com/go-redis/redis/v8" package
+// implement by using "github.com/redis/go-redis/v9" package
 type GoRedis struct {
 	Client *redis.Client
 	Prefix string
