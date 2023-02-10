@@ -28,7 +28,7 @@ jobs:
         - 6379:6379
     strategy:
       matrix:
-        go: ['1.18', '1.19']
+        go: ['1.20']
     name: Go ${{ matrix.go }}
     steps:
     - uses: actions/checkout@v2
