@@ -20,12 +20,12 @@ func redisAddr() string {
 	return addr
 }
 
-func TestGoRedis(t *testing.T) {
+func TestRedis(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 
-	s := &GoRedis{
+	s := &Redis{
 		Prefix: "session:",
 		Client: redis.NewClient(&redis.Options{
 			Addr: redisAddr(),
@@ -37,35 +37,35 @@ func TestGoRedis(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err := s.Set(ctx, "__goredis", data, opt)
+	err := s.Set(ctx, "__redis", data, opt)
 	assert.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
-	b, err := s.Get(ctx, "__goredis")
+	b, err := s.Get(ctx, "__redis")
 	assert.Nil(t, b, "expected expired key return nil")
 	assert.Error(t, err)
 
-	s.Set(ctx, "__goredis", data, opt)
+	s.Set(ctx, "__redis", data, opt)
 	time.Sleep(2 * time.Second)
-	_, err = s.Get(ctx, "__goredis")
+	_, err = s.Get(ctx, "__redis")
 	assert.Error(t, err, "expected expired key return error")
 
-	s.Set(ctx, "__goredis", data, opt)
-	b, err = s.Get(ctx, "__goredis")
+	s.Set(ctx, "__redis", data, opt)
+	b, err = s.Get(ctx, "__redis")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 
-	s.Del(ctx, "__goredis")
-	_, err = s.Get(ctx, "__goredis")
+	s.Del(ctx, "__redis")
+	_, err = s.Get(ctx, "__redis")
 	assert.Error(t, err)
 }
 
-func TestGoRedisWithoutTTL(t *testing.T) {
+func TestRedisWithoutTTL(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 
-	s := &GoRedis{
+	s := &Redis{
 		Prefix: "session:",
 		Client: redis.NewClient(&redis.Options{
 			Addr: redisAddr(),
@@ -77,10 +77,10 @@ func TestGoRedisWithoutTTL(t *testing.T) {
 	data := make(session.Data)
 	data["test"] = "123"
 
-	err := s.Set(ctx, "__goredis_without_ttl", data, opt)
+	err := s.Set(ctx, "__redis_without_ttl", data, opt)
 	assert.NoError(t, err)
 
-	b, err := s.Get(ctx, "__goredis_without_ttl")
+	b, err := s.Get(ctx, "__redis_without_ttl")
 	assert.NoError(t, err)
 	assert.Equal(t, data, b)
 }

@@ -9,15 +9,15 @@ import (
 	"github.com/moonrhythm/session"
 )
 
-// GoRedis is the redis store
+// Redis is the redis store
 // implement by using "github.com/redis/go-redis/v9" package
-type GoRedis struct {
+type Redis struct {
 	Client *redis.Client
 	Prefix string
 	Coder  session.StoreCoder
 }
 
-func (s *GoRedis) coder() session.StoreCoder {
+func (s *Redis) coder() session.StoreCoder {
 	if s.Coder == nil {
 		return session.DefaultStoreCoder
 	}
@@ -25,7 +25,7 @@ func (s *GoRedis) coder() session.StoreCoder {
 }
 
 // Get gets session data from redis
-func (s *GoRedis) Get(ctx context.Context, key string) (session.Data, error) {
+func (s *Redis) Get(ctx context.Context, key string) (session.Data, error) {
 	data, err := s.Client.Get(ctx, s.Prefix+key).Bytes()
 	if err == redis.Nil {
 		return nil, session.ErrNotFound
@@ -43,7 +43,7 @@ func (s *GoRedis) Get(ctx context.Context, key string) (session.Data, error) {
 }
 
 // Set sets session data to redis
-func (s *GoRedis) Set(ctx context.Context, key string, value session.Data, opt session.StoreOption) error {
+func (s *Redis) Set(ctx context.Context, key string, value session.Data, opt session.StoreOption) error {
 	var buf bytes.Buffer
 	err := s.coder().NewEncoder(&buf).Encode(value)
 	if err != nil {
@@ -53,6 +53,6 @@ func (s *GoRedis) Set(ctx context.Context, key string, value session.Data, opt s
 }
 
 // Del deletes session data from redis
-func (s *GoRedis) Del(ctx context.Context, key string) error {
+func (s *Redis) Del(ctx context.Context, key string) error {
 	return s.Client.Del(ctx, s.Prefix+key).Err()
 }
