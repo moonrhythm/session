@@ -1,6 +1,6 @@
 module github.com/moonrhythm/session/example/http
 
-go 1.17
+go 1.20
 
 require github.com/moonrhythm/session v0.18.0
 
