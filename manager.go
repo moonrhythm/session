@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -14,6 +15,8 @@ import (
 type Manager struct {
 	config Config
 	hashID func(id string) string
+
+	ErrorLog *log.Logger
 }
 
 // New creates new session manager
@@ -29,7 +32,7 @@ func New(config Config) *Manager {
 		m.config.GenerateID = func() string {
 			b := make([]byte, 32)
 			if _, err := rand.Read(b); err != nil {
-				// this should never happened
+				// this should never have happened
 				// or something wrong with OS's crypto pseudorandom generator
 				panic(err)
 			}
@@ -55,6 +58,14 @@ func New(config Config) *Manager {
 	}
 
 	return &m
+}
+
+func (m *Manager) logf(format string, args ...any) {
+	if m.ErrorLog != nil {
+		m.ErrorLog.Printf(format, args...)
+	} else {
+		log.Printf(format, args...)
+	}
 }
 
 // Get retrieves session from request

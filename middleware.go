@@ -93,7 +93,7 @@ func (m *scopedManager) MustSaveAll() {
 	for _, s := range m.storage {
 		err := m.Save(s)
 		if err != nil {
-			panic("session: " + err.Error())
+			m.Manager.logf("session: save session error: %v", err)
 		}
 	}
 }
