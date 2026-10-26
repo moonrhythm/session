@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 func TestMemory(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	s := new(Memory).GCEvery(10 * time.Millisecond)
 
@@ -48,7 +47,7 @@ func TestMemory(t *testing.T) {
 func TestMemoryWithoutTTL(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	s := new(Memory).GCEvery(10 * time.Millisecond)
 

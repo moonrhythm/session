@@ -6,7 +6,7 @@ import (
 )
 
 // Data stores session data
-type Data map[string]interface{}
+type Data map[string]any
 
 // Session type
 type Session struct {
@@ -58,7 +58,7 @@ func (s *Session) Changed() bool {
 }
 
 // Get gets data from session
-func (s *Session) Get(key string) interface{} {
+func (s *Session) Get(key string) any {
 	if s.data == nil {
 		return nil
 	}
@@ -102,7 +102,7 @@ func (s *Session) GetBool(key string) bool {
 }
 
 // Set sets data to session
-func (s *Session) Set(key string, value interface{}) {
+func (s *Session) Set(key string, value any) {
 	if s.data == nil {
 		s.data = make(Data)
 	}
@@ -122,7 +122,7 @@ func (s *Session) Del(key string) {
 }
 
 // Pop gets data from session then delete it
-func (s *Session) Pop(key string) interface{} {
+func (s *Session) Pop(key string) any {
 	if s.data == nil {
 		return nil
 	}

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -105,7 +106,7 @@ func (m *Manager) Get(r *http.Request, name string) (*Session, error) {
 		if err == nil && !isDestroyedRecord(s.data) {
 			s.rawID = rawID
 			s.id = hashedID
-		} else if err != nil && err != ErrNotFound {
+		} else if err != nil && !errors.Is(err, ErrNotFound) {
 			return nil, err
 		} else {
 			// Missing row, or a regenerate/destroy marker. Do not adopt the

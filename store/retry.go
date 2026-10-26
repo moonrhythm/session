@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/moonrhythm/session"
@@ -26,9 +27,9 @@ func (s *Retry) backOffDuration() time.Duration {
 
 // Get gets session data from wrapped store with retry
 func (s *Retry) Get(ctx context.Context, key string) (r session.Data, err error) {
-	for i := 0; i < s.maxAttempts(); i++ {
+	for range s.maxAttempts() {
 		r, err = s.Store.Get(ctx, key)
-		if err == nil || err == session.ErrNotFound {
+		if err == nil || errors.Is(err, session.ErrNotFound) {
 			break
 		}
 		time.Sleep(s.backOffDuration())
@@ -38,7 +39,7 @@ func (s *Retry) Get(ctx context.Context, key string) (r session.Data, err error)
 
 // Set sets session data to wrapped store with retry
 func (s *Retry) Set(ctx context.Context, key string, value session.Data, opt session.StoreOption) (err error) {
-	for i := 0; i < s.maxAttempts(); i++ {
+	for range s.maxAttempts() {
 		err = s.Store.Set(ctx, key, value, opt)
 		if err == nil {
 			break
@@ -50,7 +51,7 @@ func (s *Retry) Set(ctx context.Context, key string, value session.Data, opt ses
 
 // Del deletes session data from wrapped store with retry
 func (s *Retry) Del(ctx context.Context, key string) (err error) {
-	for i := 0; i < s.maxAttempts(); i++ {
+	for range s.maxAttempts() {
 		err = s.Store.Del(ctx, key)
 		if err == nil {
 			break

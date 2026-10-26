@@ -41,12 +41,12 @@ type StoreCoder interface {
 
 // StoreEncoder interface
 type StoreEncoder interface {
-	Encode(e interface{}) error
+	Encode(e any) error
 }
 
 // StoreDecoder interface
 type StoreDecoder interface {
-	Decode(e interface{}) error
+	Decode(e any) error
 }
 
 // DefaultStoreCoder is the default store coder

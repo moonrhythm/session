@@ -68,7 +68,7 @@ func TestSQLGetReturnsScanError(t *testing.T) {
 func TestSQL_PostgreSQL(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	db := openPostgreSQL(t)
 	defer db.Close()
@@ -110,7 +110,7 @@ func TestSQL_PostgreSQL(t *testing.T) {
 func TestSQLWithoutTTL(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	db := openPostgreSQL(t)
 	defer db.Close()

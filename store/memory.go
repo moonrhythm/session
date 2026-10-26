@@ -14,7 +14,7 @@ type Memory struct {
 	Coder session.StoreCoder
 
 	m sync.RWMutex
-	l map[interface{}]*memoryItem
+	l map[any]*memoryItem
 }
 
 type memoryItem struct {
@@ -87,7 +87,7 @@ func (s *Memory) Set(_ context.Context, key string, value session.Data, opt sess
 		it.exp = time.Now().Add(opt.TTL)
 	}
 	if s.l == nil {
-		s.l = make(map[interface{}]*memoryItem)
+		s.l = make(map[any]*memoryItem)
 	}
 	s.l[key] = it
 	s.m.Unlock()

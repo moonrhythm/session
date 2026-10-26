@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"context"
+	"errors"
 
 	"github.com/redis/go-redis/v9"
 
@@ -27,7 +28,7 @@ func (s *Redis) coder() session.StoreCoder {
 // Get gets session data from redis
 func (s *Redis) Get(ctx context.Context, key string) (session.Data, error) {
 	data, err := s.Client.Get(ctx, s.Prefix+key).Bytes()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return nil, session.ErrNotFound
 	}
 	if err != nil {

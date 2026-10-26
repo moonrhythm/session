@@ -123,7 +123,7 @@ func TestFlash(t *testing.T) {
 		f.Add("a", 2)
 		f.Add("a", 3)
 		v = f.Values("a")
-		assert.Equal(t, []interface{}{1, 2, 3}, v)
+		assert.Equal(t, []any{1, 2, 3}, v)
 		assert.False(t, f.Has("a"), "key should deleted after call values")
 	})
 }

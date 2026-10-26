@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 )
 
-type flashData map[string][]interface{}
+type flashData map[string][]any
 
 // Flash type
 type Flash struct {
@@ -37,9 +37,9 @@ func (f *Flash) encode() ([]byte, error) {
 }
 
 // Values returns slice of given key
-func (f *Flash) Values(key string) []interface{} {
+func (f *Flash) Values(key string) []any {
 	if !f.Has(key) {
-		return []interface{}{}
+		return []any{}
 	}
 
 	f.changed = true
@@ -49,18 +49,18 @@ func (f *Flash) Values(key string) []interface{} {
 }
 
 // Set sets value to flash
-func (f *Flash) Set(key string, value interface{}) {
+func (f *Flash) Set(key string, value any) {
 	if !f.changed {
 		f.changed = true
 	}
 	if f.v == nil {
 		f.v = make(flashData)
 	}
-	f.v[key] = []interface{}{value}
+	f.v[key] = []any{value}
 }
 
 // Add adds value to flash
-func (f *Flash) Add(key string, value interface{}) {
+func (f *Flash) Add(key string, value any) {
 	if !f.changed {
 		f.changed = true
 	}
@@ -71,7 +71,7 @@ func (f *Flash) Add(key string, value interface{}) {
 }
 
 // Get gets value from flash
-func (f *Flash) Get(key string) interface{} {
+func (f *Flash) Get(key string) any {
 	if !f.Has(key) {
 		return nil
 	}
@@ -160,7 +160,7 @@ func (f *Flash) Changed() bool {
 func cloneValues(src flashData) flashData {
 	n := make(flashData, len(src))
 	for k, vv := range src {
-		n[k] = make([]interface{}, len(vv))
+		n[k] = make([]any, len(vv))
 		for kk, vvv := range vv {
 			n[k][kk] = vvv
 		}
