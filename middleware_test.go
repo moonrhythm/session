@@ -1,7 +1,6 @@
 package session_test
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -856,7 +855,7 @@ func TestEmptyContext(t *testing.T) {
 		r := recover()
 		assert.Nil(t, r, "expected get session from empty context must not panic")
 	}()
-	s, err := session.Get(context.Background(), "sess")
+	s, err := session.Get(t.Context(), "sess")
 	assert.Nil(t, s, "expected get session from empty context returns nil")
 	assert.Equal(t, session.ErrNotPassMiddleware, err)
 }
@@ -1061,7 +1060,7 @@ func BenchmarkDefaultConfig(b *testing.B) {
 		Store: &mockStore{},
 	})(mockHandler)
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 	}

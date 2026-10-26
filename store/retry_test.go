@@ -39,7 +39,7 @@ func (s *mockStore) Del(ctx context.Context, key string) error {
 }
 
 func TestRetrySuccess(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("Get", func(t *testing.T) {
 		m := &mockStore{}
@@ -67,7 +67,7 @@ func TestRetrySuccess(t *testing.T) {
 }
 
 func TestRetryFail(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("Get", func(t *testing.T) {
 		s := &Retry{Store: &mockStore{}, MaxAttempts: 1}

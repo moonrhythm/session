@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"os"
 	"testing"
 	"time"
@@ -23,7 +22,7 @@ func redisAddr() string {
 func TestRedis(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	s := &Redis{
 		Prefix: "session:",
@@ -63,7 +62,7 @@ func TestRedis(t *testing.T) {
 func TestRedisWithoutTTL(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	s := &Redis{
 		Prefix: "session:",
