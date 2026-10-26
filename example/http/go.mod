@@ -2,7 +2,7 @@ module github.com/moonrhythm/session/example/http
 
 go 1.26.0
 
-require github.com/moonrhythm/session v0.19.0
+require github.com/moonrhythm/session v0.20.0
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
