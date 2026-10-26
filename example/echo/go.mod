@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/labstack/echo/v4 v4.16.2
-	github.com/moonrhythm/session v0.19.0
+	github.com/moonrhythm/session v0.20.0
 )
 
 require (
