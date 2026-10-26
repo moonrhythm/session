@@ -1066,3 +1066,29 @@ func BenchmarkDefaultConfig(b *testing.B) {
 		h.ServeHTTP(w, r)
 	}
 }
+
+func TestDestroyedMarkerIsNotAdopted(t *testing.T) {
+	t.Parallel()
+
+	h := session.Middleware(session.Config{
+		Store: &mockStore{
+			GetFunc: func(string) (session.Data, error) {
+				return session.Data{
+					"_session/destroyed": float64(1),
+					"user":               "victim",
+				}, nil
+			},
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s, err := session.Get(r.Context(), sessName)
+		assert.NoError(t, err)
+		assert.True(t, s.IsNew())
+		assert.Nil(t, s.Get("user"))
+		w.Write([]byte("ok"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", sessName+"=attacker-chosen")
+	h.ServeHTTP(w, r)
+}

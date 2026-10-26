@@ -233,6 +233,9 @@ func (s *Session) Destroy() error {
 }
 
 func isDestroyedRecord(data Data) bool {
-	_, ok := data[destroyedKey].(int64)
+	if len(data) == 0 {
+		return false
+	}
+	_, ok := data[destroyedKey]
 	return ok
 }
