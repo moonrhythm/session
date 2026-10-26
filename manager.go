@@ -102,15 +102,16 @@ func (m *Manager) Get(r *http.Request, name string) (*Session, error) {
 
 		// get session data from store
 		s.data, err = m.config.Store.Get(r.Context(), hashedID)
-		if err == nil {
+		if err == nil && !isDestroyedRecord(s.data) {
 			s.rawID = rawID
 			s.id = hashedID
-		} else if err != ErrNotFound {
+		} else if err != nil && err != ErrNotFound {
 			return nil, err
+		} else {
+			// Missing row, or a regenerate/destroy marker. Do not adopt the
+			// presented id; that is the session fixation path.
+			s.data = nil
 		}
-
-		// DO NOT set session id to cookie value if not found in store
-		// to prevent session fixation attack
 	}
 invalidSignature:
 
@@ -127,6 +128,11 @@ invalidSignature:
 //
 // Save must be called before response header was written
 func (m *Manager) Save(ctx context.Context, w http.ResponseWriter, s *Session) error {
+	if s.destroyed {
+		m.expireCookie(w, s)
+		return nil
+	}
+
 	m.setCookie(w, s)
 
 	// detect is flash changed and encode new flash data
@@ -156,8 +162,9 @@ save:
 	return m.config.Store.Set(ctx, s.id, s.data, makeStoreOption(m, s))
 }
 
-// Destroy deletes session from store
+// Destroy deletes session from store and keeps a later Save from writing it back.
 func (m *Manager) Destroy(ctx context.Context, s *Session) error {
+	s.destroyed = true
 	return m.config.Store.Del(ctx, s.id)
 }
 
@@ -175,10 +182,12 @@ func (m *Manager) Regenerate(ctx context.Context, s *Session) error {
 		return m.config.Store.Del(ctx, id)
 	}
 
-	data := s.data.Clone()
-	data[timestampKey] = int64(0)
-	data[destroyedKey] = time.Now().UnixNano()
-	return m.config.Store.Set(ctx, id, data, makeStoreOption(m, s))
+	// Keep a marker only. Copying the session map would leave the previous
+	// cookie authenticated at the new privilege level.
+	return m.config.Store.Set(ctx, id, Data{
+		timestampKey: int64(0),
+		destroyedKey: time.Now().UnixNano(),
+	}, makeStoreOption(m, s))
 }
 
 // Renew clears session data and regenerate new session id
@@ -221,6 +230,19 @@ func (m *Manager) setCookie(w http.ResponseWriter, s *Session) {
 	}
 
 	http.SetCookie(w, &cs)
+}
+
+func (m *Manager) expireCookie(w http.ResponseWriter, s *Session) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     s.Name,
+		Domain:   s.Domain,
+		Path:     s.Path,
+		HttpOnly: s.HTTPOnly,
+		Value:    "",
+		Secure:   s.Secure,
+		SameSite: s.SameSite,
+		MaxAge:   -1,
+	})
 }
 
 func (m *Manager) isSecure(r *http.Request) bool {

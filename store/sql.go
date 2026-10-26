@@ -73,6 +73,9 @@ func (s *SQL) Get(ctx context.Context, key string) (session.Data, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, session.ErrNotFound
 	}
+	if err != nil {
+		return nil, err
+	}
 
 	var sessData session.Data
 	err = s.coder().NewDecoder(bytes.NewReader(b)).Decode(&sessData)

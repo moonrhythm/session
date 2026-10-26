@@ -3,7 +3,9 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -37,6 +39,30 @@ func openPostgreSQL(t *testing.T) *sql.DB {
 		t.Fatalf("can not open postgres database: %v", err)
 	}
 	return db
+}
+
+func TestSQLGetReturnsScanError(t *testing.T) {
+	t.Parallel()
+
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@127.0.0.1:1/postgres?sslmode=disable")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { db.Close() })
+
+	s := &SQL{
+		DB:           db,
+		GetStatement: `select value from sessions where id = $1`,
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	data, err := s.Get(ctx, "missing")
+	assert.Nil(t, data)
+	assert.Error(t, err)
+	assert.False(t, errors.Is(err, session.ErrNotFound))
+	assert.False(t, errors.Is(err, io.EOF))
+	assert.ErrorIs(t, err, context.Canceled)
 }
 
 func TestSQL_PostgreSQL(t *testing.T) {
