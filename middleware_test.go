@@ -424,7 +424,7 @@ func TestRegenerate(t *testing.T) {
 	r.Header.Set("Cookie", sess1)
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, r)
-	assert.Equal(t, "2", w.Body.String())
+	assert.Equal(t, "<nil>", w.Body.String())
 
 	r = httptest.NewRequest(http.MethodGet, "/", nil)
 	r.Header.Set("Cookie", sess2)
@@ -655,6 +655,155 @@ func TestDestroy(t *testing.T) {
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 	assert.True(t, delCalled)
+	assert.Contains(t, w.Header().Get("Set-Cookie"), "Max-Age=0")
+}
+
+func TestDestroyAfterChangeDoesNotRestore(t *testing.T) {
+	t.Parallel()
+
+	mem := new(store.Memory)
+	step := 0
+	var issued string
+
+	h := session.Middleware(session.Config{
+		Store:  mem,
+		MaxAge: time.Hour,
+		Keys:   [][]byte{[]byte("destroy-key")},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s, err := session.Get(r.Context(), sessName)
+		assert.NoError(t, err)
+		switch step {
+		case 0:
+			s.Set("user", "victim")
+		case 1:
+			s.Set("extra", 1)
+			assert.NoError(t, s.Destroy())
+		default:
+			assert.True(t, s.IsNew())
+			assert.Nil(t, s.Get("user"))
+			assert.Nil(t, s.Get("extra"))
+		}
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	issued = w.Header().Get("Set-Cookie")
+	assert.NotEmpty(t, issued)
+
+	step = 1
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", issued)
+	h.ServeHTTP(w, r)
+	assert.Contains(t, w.Header().Get("Set-Cookie"), "Max-Age=0")
+
+	step = 2
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", issued)
+	h.ServeHTTP(w, r)
+}
+
+func TestDestroyWithResaveDoesNotRestore(t *testing.T) {
+	t.Parallel()
+
+	mem := new(store.Memory)
+	step := 0
+	var issued string
+
+	h := session.Middleware(session.Config{
+		Store:  mem,
+		MaxAge: time.Hour,
+		Resave: true,
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s, err := session.Get(r.Context(), sessName)
+		assert.NoError(t, err)
+		switch step {
+		case 0:
+			s.Set("user", "victim")
+		case 1:
+			assert.NoError(t, s.Destroy())
+		default:
+			assert.True(t, s.IsNew())
+			assert.Nil(t, s.Get("user"))
+		}
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	issued = w.Header().Get("Set-Cookie")
+
+	step = 1
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", issued)
+	h.ServeHTTP(w, r)
+
+	step = 2
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", issued)
+	h.ServeHTTP(w, r)
+}
+
+func TestRegenerateDropsOldCookiePrivileges(t *testing.T) {
+	t.Parallel()
+
+	mem := new(store.Memory)
+	step := 0
+	var oldCookie, newCookie string
+
+	h := session.Middleware(session.Config{
+		Store:  mem,
+		MaxAge: time.Hour,
+		Keys:   [][]byte{[]byte("regen-key")},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s, err := session.Get(r.Context(), sessName)
+		assert.NoError(t, err)
+		switch step {
+		case 0:
+			s.Set("user", "anon")
+		case 1:
+			s.Set("user", "victim")
+			assert.NoError(t, s.Regenerate())
+		case 2:
+			assert.True(t, s.IsNew())
+			assert.Nil(t, s.Get("user"))
+			assert.False(t, s.Hijacked())
+		default:
+			assert.False(t, s.IsNew())
+			assert.Equal(t, "victim", s.Get("user"))
+		}
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	h.ServeHTTP(w, r)
+	oldCookie = w.Header().Get("Set-Cookie")
+	assert.NotEmpty(t, oldCookie)
+
+	step = 1
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", oldCookie)
+	h.ServeHTTP(w, r)
+	newCookie = w.Header().Get("Set-Cookie")
+	assert.NotEmpty(t, newCookie)
+	assert.NotEqual(t, oldCookie, newCookie)
+
+	step = 2
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", oldCookie)
+	h.ServeHTTP(w, r)
+
+	step = 3
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", newCookie)
+	h.ServeHTTP(w, r)
 }
 
 func TestDisableHashID(t *testing.T) {
@@ -777,7 +926,9 @@ func TestHijack(t *testing.T) {
 			s.Set("test", 2)
 			c = 2
 		} else if c == 2 {
-			assert.True(t, s.Hijacked())
+			assert.True(t, s.IsNew())
+			assert.Nil(t, s.Get("test"))
+			assert.False(t, s.Hijacked())
 			c = 3
 		} else if c == 3 {
 			assert.False(t, s.Hijacked())
@@ -914,4 +1065,30 @@ func BenchmarkDefaultConfig(b *testing.B) {
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 	}
+}
+
+func TestDestroyedMarkerIsNotAdopted(t *testing.T) {
+	t.Parallel()
+
+	h := session.Middleware(session.Config{
+		Store: &mockStore{
+			GetFunc: func(string) (session.Data, error) {
+				return session.Data{
+					"_session/destroyed": float64(1),
+					"user":               "victim",
+				}, nil
+			},
+		},
+	})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s, err := session.Get(r.Context(), sessName)
+		assert.NoError(t, err)
+		assert.True(t, s.IsNew())
+		assert.Nil(t, s.Get("user"))
+		w.Write([]byte("ok"))
+	}))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r.Header.Set("Cookie", sessName+"=attacker-chosen")
+	h.ServeHTTP(w, r)
 }

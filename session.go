@@ -10,12 +10,13 @@ type Data map[string]interface{}
 
 // Session type
 type Session struct {
-	id      string // id is the hashed id if hash enabled
-	rawID   string
-	data    Data
-	changed bool
-	isNew   bool
-	flash   *Flash
+	id        string // id is the hashed id if hash enabled
+	rawID     string
+	data      Data
+	changed   bool
+	isNew     bool
+	destroyed bool
+	flash     *Flash
 
 	// cookie config
 	Name     string
@@ -229,4 +230,12 @@ func (s *Session) Destroy() error {
 		return ErrNotPassMiddleware
 	}
 	return s.m.Destroy(s.m.r.Context(), s)
+}
+
+func isDestroyedRecord(data Data) bool {
+	if len(data) == 0 {
+		return false
+	}
+	_, ok := data[destroyedKey]
+	return ok
 }

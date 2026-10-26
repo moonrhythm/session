@@ -27,8 +27,8 @@ type Config struct {
 	// if IdleTimeout is zero, it will use MaxAge
 	IdleTimeout time.Duration
 
-	// DeleteOldSession deletes the old session from store when regenerate,
-	// better not to delete old session to avoid user loss session when unstable network
+	// DeleteOldSession deletes the old session from store when regenerate.
+	// When false, the old id is stored as a destroyed marker and is not loaded.
 	DeleteOldSession bool
 
 	// Resave forces session to save to store even if session was not modified

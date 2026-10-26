@@ -42,21 +42,27 @@ func TestRetrySuccess(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Get", func(t *testing.T) {
-		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
+		m := &mockStore{}
+		s := &Retry{Store: m, MaxAttempts: 0}
 		_, err := s.Get(ctx, "")
 		assert.NoError(t, err)
+		assert.Equal(t, 3, m.attempt)
 	})
 
 	t.Run("Set", func(t *testing.T) {
-		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
+		m := &mockStore{}
+		s := &Retry{Store: m, MaxAttempts: 0}
 		err := s.Set(ctx, "", session.Data{}, session.StoreOption{})
 		assert.NoError(t, err)
+		assert.Equal(t, 3, m.attempt)
 	})
 
 	t.Run("Del", func(t *testing.T) {
-		s := &Retry{Store: &mockStore{}, MaxAttempts: 0}
+		m := &mockStore{}
+		s := &Retry{Store: m, MaxAttempts: 0}
 		err := s.Del(ctx, "")
 		assert.NoError(t, err)
+		assert.Equal(t, 3, m.attempt)
 	})
 }
 
