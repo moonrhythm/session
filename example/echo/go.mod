@@ -1,6 +1,6 @@
 module github.com/moonrhythm/session/example/echo
 
-go 1.20
+go 1.26
 
 require (
 	github.com/labstack/echo/v4 v4.10.2
